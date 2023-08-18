@@ -66,7 +66,7 @@ typedef enum {
 
 #define SEGMENT_LIST_FLAG_CACHE 1
 #define SEGMENT_LIST_FLAG_LIVE  2
-#define SEGMENT_LIST_FLAG_DELETE  3
+#define SEGMENT_LIST_FLAG_DELETE 3
 
 typedef struct SegmentContext {
     const AVClass *class;  /**< Class for private options. */
