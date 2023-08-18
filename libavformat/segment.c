@@ -349,6 +349,42 @@ static void segment_list_print_entry(AVIOContext      *list_ioctx,
     }
 }
 
+
+static int segment_delete_old_segments(AVFormatContext *s)
+{
+    SegmentContext *seg = s->priv_data;
+    int ret = 0;
+    int delete_count;
+    SegmentListEntry *entry;
+
+    // Silinecek segment sayısını hesapla
+    delete_count = seg->segment_count - seg->list_size;
+
+    // Silinecek segment yoksa çık
+    if (delete_count <= 0)
+        return 0;
+
+    entry = seg->segment_list_entries;
+
+    // Segment listesini dolaş ve eski segmentleri sil
+    while (entry && delete_count > 0) {
+        ret = avpriv_io_delete(entry->filename);
+        if (ret < 0)
+            av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", entry->filename);
+
+        SegmentListEntry *next_entry = entry->next;
+        av_freep(&entry->filename);
+        av_freep(&entry);
+        entry = next_entry;
+
+        delete_count--;
+    }
+
+    seg->segment_list_entries = entry;
+
+    return ret;
+}
+
 static int segment_end(AVFormatContext *s, int write_trailer, int is_last)
 {
     SegmentContext *seg = s->priv_data;
@@ -461,41 +497,6 @@ static int segment_end(AVFormatContext *s, int write_trailer, int is_last)
 
 end:
     ff_format_io_close(oc, &oc->pb);
-
-    return ret;
-}
-
-static int segment_delete_old_segments(AVFormatContext *s)
-{
-    SegmentContext *seg = s->priv_data;
-    int ret = 0;
-    int delete_count;
-    SegmentListEntry *entry;
-
-    // Silinecek segment sayısını hesapla
-    delete_count = seg->segment_count - seg->list_size;
-
-    // Silinecek segment yoksa çık
-    if (delete_count <= 0)
-        return 0;
-
-    entry = seg->segment_list_entries;
-
-    // Segment listesini dolaş ve eski segmentleri sil
-    while (entry && delete_count > 0) {
-        ret = avpriv_io_delete(entry->filename);
-        if (ret < 0)
-            av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", entry->filename);
-
-        SegmentListEntry *next_entry = entry->next;
-        av_freep(&entry->filename);
-        av_freep(&entry);
-        entry = next_entry;
-
-        delete_count--;
-    }
-
-    seg->segment_list_entries = entry;
 
     return ret;
 }
