@@ -25,7 +25,9 @@
  */
 
 #include "config_components.h"
-
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <time.h>
 
 #include "avformat.h"
@@ -392,7 +394,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
     int delete_count;
 
     // Silinecek segment sayısını hesapla
-    delete_count = seg->segment_count - seg->list_size;
+    delete_count = seg->segment_count - seg->list_size - seg->time;
 
     // Silinecek segment yoksa çık
     if (delete_count <= 0)
@@ -402,7 +404,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
 
     // Segment listesini dolaş ve eski segmentleri sil
     while (entry && delete_count > 0) {
-        ret = remove(entry->filename);
+        ret = unlink(entry->filename);
         if (ret != 0)
             av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", entry->filename);
 
