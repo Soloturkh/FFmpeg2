@@ -393,6 +393,24 @@ static int segment_delete_old_segments(AVFormatContext *s)
     int ret = 0;
     int delete_count;
     char full_path[1024];  // Tam yolu saklamak için bir buffer
+    char buf[1024];
+    char *new_name;
+
+    if (seg->use_strftime) {
+        time_t now0;
+        struct tm *tm, tmpbuf;
+        time(&now0);
+        tm = localtime_r(&now0, &tmpbuf);
+        if (!strftime(buf, sizeof(buf), s->url, tm)) {
+            av_log(oc, AV_LOG_ERROR, "Could not get segment filename with strftime\n");
+            return AVERROR(EINVAL);
+        }
+    } else if (av_get_frame_filename(buf, sizeof(buf),
+                                     s->url, seg->segment_idx) < 0) {
+        av_log(oc, AV_LOG_ERROR, "Invalid segment filename template '%s'\n", s->url);
+        return AVERROR(EINVAL);
+    }
+    new_name = av_strdup(buf);
 
     // Silinecek segment sayısını hesapla
     delete_count = seg->segment_count - (2 * seg->list_size + 2);
@@ -405,7 +423,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
 
     // Segment listesini dolaş ve eski segmentleri sil
     while (entry && delete_count > 0) {
-        snprintf(full_path, sizeof(full_path), "%s/%s", s->url, entry->filename);
+        snprintf(full_path, sizeof(full_path), "%s/%s", new_name, entry->filename);
         ret = unlink(full_path);
         if (ret != 0)
             av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", full_path);
