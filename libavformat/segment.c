@@ -356,9 +356,8 @@ static void segment_list_print_entry(AVIOContext      *list_ioctx,
 static int segment_delete_old_segments(AVFormatContext *s)
 {
     SegmentContext *seg = s->priv_data;
-    SegmentListEntry *entry, *next_entry;
+    SegmentListEntry *next_entry;
     int ret = 0;
-    int delete_count;
     char full_path[1024];  // Tam yolu saklamak için bir buffer
 
     if (seg->list) {
@@ -396,7 +395,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
 	    seg->defans_list_entries = entry;
         } 
     }
-
+end:
     return 0;
 }
 
