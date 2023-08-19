@@ -402,9 +402,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
         return 0;
 
     entry = seg->segment_list_entries;
-    entry2 = seg->segment_list_entries_end;
-    av_log(s, AV_LOG_WARNING, "ilk segment: %s : index : %s\n", entry->filename, entry->index);
-    av_log(s, AV_LOG_WARNING, "son segment: %s : index : %s\n", entry2->filename,entry2->index);
+    av_log(s, AV_LOG_WARNING, "ilk segment: %s - index : %s\n", entry->filename, entry->index);
     // Segment listesini dolaş ve eski segmentleri sil
     while (entry && delete_count > 0) {
         snprintf(full_path, sizeof(full_path), "%s/%s", s->url, entry->filename);
@@ -414,11 +412,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
 
         next_entry = entry->next;
         av_freep(&entry->filename);
-        av_freep(&entry2->filename);
-        av_freep(&entry->index);
-        av_freep(&entry2->index);
         av_freep(&entry);
-        av_freep(&entry2);
         entry = next_entry;
 
         delete_count--;
