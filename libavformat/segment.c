@@ -1103,7 +1103,7 @@ static const AVOption options[] = {
     { "segment_list_flags","set flags affecting segment list generation", OFFSET(list_flags), AV_OPT_TYPE_FLAGS, {.i64 = SEGMENT_LIST_FLAG_CACHE }, 0, UINT_MAX, E, "list_flags"},
     { "cache",             "allow list caching",                                    0, AV_OPT_TYPE_CONST, {.i64 = SEGMENT_LIST_FLAG_CACHE }, INT_MIN, INT_MAX,   E, "list_flags"},
     { "live",              "enable live-friendly list generation (useful for HLS)", 0, AV_OPT_TYPE_CONST, {.i64 = SEGMENT_LIST_FLAG_LIVE }, INT_MIN, INT_MAX,    E, "list_flags"},
-	{ "delete",            "delete segments", 0, AV_OPT_TYPE_CONST, {.i64 = SEGMENT_LIST_FLAG_DELETE }, INT_MIN, INT_MAX,    E, "list_flags"},
+    { "delete",            "delete segments", 0, AV_OPT_TYPE_CONST, {.i64 = SEGMENT_LIST_FLAG_DELETE }, INT_MIN, INT_MAX,    E, "list_flags"},
 
     { "segment_list_size", "set the maximum number of playlist entries", OFFSET(list_size), AV_OPT_TYPE_INT,  {.i64 = 0},     0, INT_MAX, E },
 
