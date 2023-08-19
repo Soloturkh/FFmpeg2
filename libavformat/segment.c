@@ -389,6 +389,7 @@ static void segment_list_print_entry(AVIOContext      *list_ioctx,
 static int segment_delete_old_segments(AVFormatContext *s)
 {
     SegmentContext *seg = s->priv_data;
+    AVFormatContext *oc = seg->avf;
     SegmentListEntry *entry, *next_entry;
     av_log(s, AV_LOG_WARNING, "url: %s// oc : %s// idx: %s// idxwrap: %s// count: %s\n", s->url,oc->url,s->segment_idx,s->segment_idx_wrap,s->segment_count);
     int ret = 0;
