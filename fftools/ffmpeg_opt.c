@@ -1528,6 +1528,8 @@ const OptionDef options[] = {
 #endif
     { "copyts",         OPT_BOOL | OPT_EXPERT,                       { &copy_ts },
         "copy timestamps" },
+    { "nofix_dts",         OPT_BOOL | OPT_EXPERT,                       { &nofix_dts },
+        "do not fix DTS" },
     { "start_at_zero",  OPT_BOOL | OPT_EXPERT,                       { &start_at_zero },
         "shift input timestamps to start at 0 when using copyts" },
     { "copytb",         HAS_ARG | OPT_INT | OPT_EXPERT,              { &copy_tb },
