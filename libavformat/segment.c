@@ -389,15 +389,11 @@ static void segment_list_print_entry(AVIOContext      *list_ioctx,
 static int segment_delete_old_segments(AVFormatContext *s)
 {
     SegmentContext *seg = s->priv_data;
-    AVFormatContext *oc = seg->avf;
-    SegmentListEntry *entry, *next_entry;
+    SegmentListEntry *entry, *next_entry, *entry2;
     int ret = 0;
     int delete_count;
     char full_path[1024];  // Tam yolu saklamak için bir buffer
-    char logger[1024];  // Tam yolu saklamak için bir buffer
 
-    snprintf(logger, sizeof(logger), "url: %s// oc : %s// idx: %s// idxwrap: %s// count: %s", s->url,oc->url,seg->segment_idx,seg->segment_idx_wrap,seg->segment_count);
-    av_log(s, AV_LOG_WARNING, "durum: %s\n", logger);
     // Silinecek segment sayısını hesapla
     delete_count = seg->segment_count - (2 * seg->list_size + 2);
 
@@ -406,7 +402,9 @@ static int segment_delete_old_segments(AVFormatContext *s)
         return 0;
 
     entry = seg->segment_list_entries;
-
+    entry2 = seg->segment_list_entries_end;
+    av_log(s, AV_LOG_WARNING, "ilk segment: %s : index : %s\n", entry->filename, entry->index);
+    av_log(s, AV_LOG_WARNING, "son segment: %s : index : %s\n", entry2->filename,entry2->index);
     // Segment listesini dolaş ve eski segmentleri sil
     while (entry && delete_count > 0) {
         snprintf(full_path, sizeof(full_path), "%s/%s", s->url, entry->filename);
