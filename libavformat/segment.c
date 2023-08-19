@@ -392,9 +392,10 @@ static int segment_delete_old_segments(AVFormatContext *s)
     SegmentListEntry *entry, *next_entry;
     int ret = 0;
     int delete_count;
+    char full_path[1024];  // Tam yolu saklamak için bir buffer
 
     // Silinecek segment sayısını hesapla
-    delete_count = seg->segment_count - 14;
+    delete_count = seg->segment_count - (2 * seg->list_size + 2);
 
     // Silinecek segment yoksa çık
     if (delete_count <= 0)
@@ -404,9 +405,10 @@ static int segment_delete_old_segments(AVFormatContext *s)
 
     // Segment listesini dolaş ve eski segmentleri sil
     while (entry && delete_count > 0) {
-        ret = unlink(entry->filename);
+        snprintf(full_path, sizeof(full_path), "%s/%s", s->url, entry->filename);
+        ret = unlink(full_path);
         if (ret != 0)
-            av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", entry->filename);
+            av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", full_path);
 
         next_entry = entry->next;
         av_freep(&entry->filename);
