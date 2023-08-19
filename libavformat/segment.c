@@ -465,11 +465,14 @@ static int segment_end(AVFormatContext *s, int write_trailer, int is_last)
             entry->filename = av_strdup(entry->filename);
             if (!seg->segment_list_entries)
                 seg->segment_list_entries = seg->segment_list_entries_end = entry;
-                seg->defans_list_entries = seg->defans_list_entries_end = entry;
             else
                 seg->segment_list_entries_end->next = entry;
-                seg->defans_list_entries_end->next = entry;
             seg->segment_list_entries_end = entry;
+
+            if (!seg->segment_list_entries)
+                seg->defans_list_entries = seg->defans_list_entries_end = entry;
+            else
+                seg->defans_list_entries_end->next = entry;
             seg->defans_list_entries_end = entry;
 
             /* drop first item */
