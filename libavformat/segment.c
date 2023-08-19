@@ -394,7 +394,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
     int delete_count;
 
     // Silinecek segment sayısını hesapla
-    delete_count = seg->segment_count - seg->list_size - seg->time;
+    delete_count = seg->segment_count - 14;
 
     // Silinecek segment yoksa çık
     if (delete_count <= 0)
