@@ -414,7 +414,11 @@ static int segment_delete_old_segments(AVFormatContext *s)
 
         next_entry = entry->next;
         av_freep(&entry->filename);
+        av_freep(&entry2->filename);
+        av_freep(&entry->index);
+        av_freep(&entry2->index);
         av_freep(&entry);
+        av_freep(&entry2);
         entry = next_entry;
 
         delete_count--;
