@@ -381,7 +381,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
             seg->defans_list_entries_end = entry;
 
             /* drop first item */
-            if (seg->list_size && seg->segment_count >= (( 2 * seg->list_size ) + 2)) {
+            if (seg->list_size && seg->segment_count >= (( 2 * seg->list_size ) + 1)) {
                 entry = seg->defans_list_entries;
 
                 // s->url'den av_basename(s->url)'i çıkarıp kalanı kullan
