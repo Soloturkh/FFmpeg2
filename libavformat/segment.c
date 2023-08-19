@@ -396,7 +396,7 @@ static int segment_delete_old_segments(AVFormatContext *s)
     char full_path[1024];  // Tam yolu saklamak için bir buffer
     char logger[1024];  // Tam yolu saklamak için bir buffer
 
-    snprintf(logger, sizeof(logger), "url: %s// oc : %s// idx: %s// idxwrap: %s// count: %s", s->url,oc->url,s->segment_idx,s->segment_idx_wrap,s->segment_count);
+    snprintf(logger, sizeof(logger), "url: %s// oc : %s// idx: %s// idxwrap: %s// count: %s", s->url,oc->url,seg->segment_idx,seg->segment_idx_wrap,seg->segment_count);
     av_log(s, AV_LOG_WARNING, "durum: %s\n", logger);
     // Silinecek segment sayısını hesapla
     delete_count = seg->segment_count - (2 * seg->list_size + 2);
