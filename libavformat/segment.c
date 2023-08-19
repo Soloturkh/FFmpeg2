@@ -25,6 +25,7 @@
  */
 
 #include "config_components.h"
+#include <stdint.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
