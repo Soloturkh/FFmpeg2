@@ -129,6 +129,8 @@ typedef struct SegmentContext {
     SegmentListEntry cur_entry;
     SegmentListEntry *segment_list_entries;
     SegmentListEntry *segment_list_entries_end;
+    SegmentListEntry *defans_list_entries;
+    SegmentListEntry *defans_list_entries_end;
 } SegmentContext;
 
 static void print_csv_escaped_str(AVIOContext *ctx, const char *str)
@@ -386,44 +388,42 @@ static void segment_list_print_entry(AVIOContext      *list_ioctx,
 //    return ret;
 //}
 
-static int segment_delete_old_segments(AVFormatContext *s)
-{
-    SegmentContext *seg = s->priv_data;
-    SegmentListEntry *entry, *next_entry, *entry2;
-    int ret = 0;
-    int delete_count;
-    char full_path[1024];  // Tam yolu saklamak için bir buffer
-    char logss[1024];  // Tam yolu saklamak için bir buffer
-
-    // Silinecek segment sayısını hesapla
-    delete_count = seg->segment_count - (2 * seg->list_size + 2);
-
-    // Silinecek segment yoksa çık
-    if (delete_count <= 0)
-        return 0;
-
-    entry = seg->segment_list_entries;
-    snprintf(logss, sizeof(logss), "%s/%s", entry->filename, entry->index);
-    av_log(s, AV_LOG_WARNING, "ilk segment: %s\n", logss);
-    // Segment listesini dolaş ve eski segmentleri sil
-    while (entry && delete_count > 0) {
-        snprintf(full_path, sizeof(full_path), "%s/%s", s->url, entry->filename);
-        ret = unlink(full_path);
-        if (ret != 0)
-            av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", full_path);
-
-        next_entry = entry->next;
-        av_freep(&entry->filename);
-        av_freep(&entry);
-        entry = next_entry;
-
-        delete_count--;
-    }
-
-    seg->segment_list_entries = entry;
-
-    return ret;
-}
+//static int segment_delete_old_segments(AVFormatContext *s)
+//{
+//    SegmentContext *seg = s->priv_data;
+//    SegmentListEntry *entry, *next_entry, *entry2;
+//    int ret = 0;
+//    int delete_count;
+//    char full_path[1024];  // Tam yolu saklamak için bir buffer
+//    char logss[1024];  // Tam yolu saklamak için bir buffer
+//
+//    // Silinecek segment sayısını hesapla
+//    delete_count = seg->segment_count - (2 * seg->list_size + 2);
+//
+//    // Silinecek segment yoksa çık
+//    if (delete_count <= 0)
+//        return 0;
+//
+//    entry = seg->defans_list_entries;
+//    // Segment listesini dolaş ve eski segmentleri sil
+//    while (entry && delete_count > 0) {
+//        snprintf(full_path, sizeof(full_path), "%s/%s", s->url, entry->filename);
+//        ret = unlink(full_path);
+//        if (ret != 0)
+//            av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", full_path);
+//
+//        next_entry = entry->next;
+//        av_freep(&entry->filename);
+//        av_freep(&entry);
+//        entry = next_entry;
+//
+//        delete_count--;
+//    }
+//
+//    seg->segment_list_entries = entry;
+//
+//    return ret;
+//}
 
 static int segment_end(AVFormatContext *s, int write_trailer, int is_last)
 {
@@ -437,9 +437,9 @@ static int segment_end(AVFormatContext *s, int write_trailer, int is_last)
     int i;
     int err;
 
-    if (seg->list_flags & SEGMENT_LIST_FLAG_DELETE) {
-        segment_delete_old_segments(s);
-    }
+    //if (seg->list_flags & SEGMENT_LIST_FLAG_DELETE) {
+    //    segment_delete_old_segments(s);
+    //}
 
     if (!oc || !oc->pb)
         return AVERROR(EINVAL);
@@ -465,9 +465,12 @@ static int segment_end(AVFormatContext *s, int write_trailer, int is_last)
             entry->filename = av_strdup(entry->filename);
             if (!seg->segment_list_entries)
                 seg->segment_list_entries = seg->segment_list_entries_end = entry;
+                seg->defans_list_entries = seg->defans_list_entries_end = entry;
             else
                 seg->segment_list_entries_end->next = entry;
+                seg->defans_list_entries_end->next = entry;
             seg->segment_list_entries_end = entry;
+            seg->defans_list_entries_end = entry;
 
             /* drop first item */
             if (seg->list_size && seg->segment_count >= seg->list_size) {
@@ -476,6 +479,23 @@ static int segment_end(AVFormatContext *s, int write_trailer, int is_last)
                 av_freep(&entry->filename);
                 av_freep(&entry);
             }
+
+            /* Defans Eski Dosyaları silme */
+            if (seg->list_size && seg->segment_count >= (2 * seg->list_size + 2) && seg->list_flags && SEGMENT_LIST_FLAG_DELETE) {
+                char full_path[1024];
+                entry = seg->defans_list_entries;
+                snprintf(full_path, sizeof(full_path), "%s/%s", s->url, entry->filename);
+                ret = unlink(full_path);
+                if (ret != 0)
+                    av_log(s, AV_LOG_WARNING, "Silinmeyenler: %s\n", full_path);
+                else
+                    av_log(s, AV_LOG_WARNING, "Silindi OK: %s\n", full_path);
+                seg->defans_list_entries = seg->defans_list_entries->next;
+                av_freep(&entry->filename);
+                av_freep(&entry);
+            }
+
+            
 
             if ((ret = segment_list_open(s)) < 0)
                 goto end;
