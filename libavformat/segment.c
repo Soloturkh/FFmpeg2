@@ -356,21 +356,24 @@ static void segment_list_print_entry(AVIOContext      *list_ioctx,
 static int segment_delete_old_segments(AVFormatContext *s)
 {
     SegmentContext *seg = s->priv_data;
-    SegmentListEntry *next_entry;
-    int ret = 0;
     char full_path[1024];  // Tam yolu saklamak için bir buffer
+    char *base_path;
 
     if (seg->list) {
         if (seg->list_size || seg->list_type == LIST_TYPE_M3U8) {
             SegmentListEntry *entry = av_mallocz(sizeof(*entry));
             if (!entry) {
-                ret = AVERROR(ENOMEM);
-                goto end;
+                return AVERROR(ENOMEM);
             }
 
             /* append new element */
             memcpy(entry, &seg->cur_entry, sizeof(*entry));
             entry->filename = av_strdup(entry->filename);
+            if (!entry->filename) {
+                av_free(entry);
+                return AVERROR(ENOMEM);
+            }
+
             if (!seg->defans_list_entries)
                 seg->defans_list_entries = seg->defans_list_entries_end = entry;
             else
@@ -378,24 +381,31 @@ static int segment_delete_old_segments(AVFormatContext *s)
             seg->defans_list_entries_end = entry;
 
             /* drop first item */
-            if (seg->list_size && seg->segment_count >= seg->list_size) {
+            if (seg->list_size && seg->segment_count >= (( 2 * seg->list_size ) + 2)) {
                 entry = seg->defans_list_entries;
-		snprintf(full_path, sizeof(full_path), "%s/%s", s->url, entry->filename);
-        	ret = unlink(full_path);
-		if (ret != 0)
-            		av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", full_path);
+
+                // s->url'den av_basename(s->url)'i çıkarıp kalanı kullan
+                base_path = av_strdup(s->url);
+                if (!base_path) {
+                    av_free(entry->filename);
+                    av_free(entry);
+                    return AVERROR(ENOMEM);
+                }
+                *(strstr(base_path, av_basename(s->url))) = '\0';
+                snprintf(full_path, sizeof(full_path), "%s%s", base_path, entry->filename);
+                av_free(base_path);
+
+                if (unlink(full_path) != 0) {
+                    av_log(s, AV_LOG_WARNING, "Failed to delete old segment: %s\n", full_path);
+                }
+
                 seg->defans_list_entries = seg->defans_list_entries->next;
-		entry = next_entry;
                 av_freep(&entry->filename);
                 av_freep(&entry);
-            } else {
-		return 0;
-	    }
-
-	    seg->defans_list_entries = entry;
+            }
         } 
     }
-end:
+
     return 0;
 }
 
