@@ -157,6 +157,9 @@ typedef struct DASHContext {
     int is_init_section_common_audio;
     int is_init_section_common_subtitle;
 
+    /* Defans relative Baglanti */
+    int use_redirected_url;
+
 } DASHContext;
 
 static int ishttp(char *url)
@@ -702,6 +705,7 @@ static int parse_manifest_segmenttimeline(AVFormatContext *s, struct representat
 
 static int resolve_content_path(AVFormatContext *s, const char *url, int *max_url_size, xmlNodePtr *baseurl_nodes, int n_baseurl_nodes)
 {
+    DASHContext *c = s->priv_data;  // FFmpeg DASH context'ini al.
     char *tmp_str = NULL;
     char *path = NULL;
     char *mpdName = NULL;
@@ -764,12 +768,18 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         xmlFree(text);
     }
 
-    node = baseurl_nodes[rootId];
-    baseurl = xmlNodeGetContent(node);
-    root_url = (av_strcasecmp(baseurl, "")) ? baseurl : path;
-    if (node) {
-        xmlNodeSetContent(node, root_url);
-        updated = 1;
+    if (c->use_redirected_url && c->base_url) {
+        // Eğer 'use_redirected_url' ayarlıysa ve 'base_url' mevcutsa
+        root_url = c->base_url;  // 'root_url' olarak yönlendirilen URL'yi kullan.
+    } else {
+        // Aksi halde orijinal 'root_url' çözümleme mantığı çalışır.
+        node = baseurl_nodes[rootId];
+        baseurl = xmlNodeGetContent(node);
+        root_url = (av_strcasecmp(baseurl, "")) ? baseurl : path;
+        if (node) {
+            xmlNodeSetContent(node, root_url);
+            updated = 1;
+        }
     }
 
     size = strlen(root_url);
@@ -2353,7 +2363,8 @@ static const AVOption dash_options[] = {
         OFFSET(allowed_extensions), AV_OPT_TYPE_STRING,
         {.str = "aac,m4a,m4s,m4v,mov,mp4,webm,ts"},
         INT_MIN, INT_MAX, FLAGS},
-    { "cenc_decryption_key", "Media decryption key (hex)", OFFSET(cenc_decryption_key), AV_OPT_TYPE_STRING, {.str = NULL}, INT_MIN, INT_MAX, .flags = FLAGS },
+    { "defanskey", "Media decryption key (hex)", OFFSET(cenc_decryption_key), AV_OPT_TYPE_STRING, {.str = NULL}, INT_MIN, INT_MAX, .flags = FLAGS },
+    { "use_redirected_url", "Use the redirected URL for resolving relative URLs", OFFSET(use_redirected_url), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, FLAGS},
     {NULL}
 };
 
