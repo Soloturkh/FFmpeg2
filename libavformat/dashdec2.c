@@ -118,6 +118,16 @@ struct representation {
     int is_restart_needed;
 };
 
+#define MAX_KEYS 10
+
+typedef struct {
+    char key_id[33];
+    char decryption_key[33];
+} DecryptionKey;
+
+DecryptionKey decryption_keys[MAX_KEYS];
+int num_keys = 0; // Mevcut anahtar sayısı
+
 typedef struct DASHContext {
     const AVClass *class;
     char *base_url;
@@ -1773,6 +1783,10 @@ static int read_data(void *opaque, uint8_t *buf, int buf_size)
     struct representation *v = opaque;
     DASHContext *c = v->parent->priv_data;
 
+    // Bu iki değeri FFmpeg'e parametre olarak eklemelisiniz.
+    const char *key_id = "..."; // elinizdeki key_id değeri
+    const char *decryption_key = "..."; // elinizdeki decryption_key değeri
+
 restart:
     if (!v->input) {
         free_fragment(&v->cur_seg);
@@ -1823,12 +1837,17 @@ restart:
         AP4_DataBuffer encrypted_data(buf, ret); 
         AP4_DataBuffer decrypted_data;
 
-        // AES şifre çözme işlemi (Bu kısım basitleştirilmiştir. Gerçekte bu işlem daha karmaşık olabilir.)
-        AP4_AesCtrDecryptor decryptor(c->key_id, c->decryption_key);
-        decryptor.Decrypt(encrypted_data, decrypted_data);
+        // v->cur_seg->key_id'yi kullanarak doğru anahtarı bul
+        for (int i = 0; i < num_keys; i++) {
+            if (strcmp(v->cur_seg->key_id, decryption_keys[i].key_id) == 0) {
+                AP4_CencSingleSampleDecrypter* decrypter = new AP4_CencSingleSampleDecrypter(new AP4_CencClearKeyCbcStreamCipher(decryption_keys[i].key_id, decryption_keys[i].decryption_key));
+                decrypter->DecryptSampleData(encrypted_data, decrypted_data, NULL);
 
-        // Şifre çözülmüş veriyi buf'a geri kopyala
-        memcpy(buf, decrypted_data.GetData(), decrypted_data.GetDataSize());
+                // Şifre çözülmüş veriyi buf'a geri kopyala
+                memcpy(buf, decrypted_data.GetData(), decrypted_data.GetDataSize());
+                break;
+            }
+        }
     }
     
     if (ret > 0)
