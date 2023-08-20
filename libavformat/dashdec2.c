@@ -28,6 +28,7 @@
 #include "avio_internal.h"
 #include "dash.h"
 #include "demux.h"
+#include <Ap4.h>
 
 #define INITIAL_BUFFER_SIZE 32768
 
@@ -1816,6 +1817,20 @@ restart:
         goto end;
     }
     ret = read_from_url(v, v->cur_seg, buf, buf_size);
+
+    // Eğer segment verileri başarıyla okunduysa ve bu segment şifrelenmişse, şifre çözme işlemlerini yap.
+    if (ret > 0 && v->cur_seg->is_encrypted) {
+        AP4_DataBuffer encrypted_data(buf, ret); 
+        AP4_DataBuffer decrypted_data;
+
+        // AES şifre çözme işlemi (Bu kısım basitleştirilmiştir. Gerçekte bu işlem daha karmaşık olabilir.)
+        AP4_AesCtrDecryptor decryptor(c->key_id, c->decryption_key);
+        decryptor.Decrypt(encrypted_data, decrypted_data);
+
+        // Şifre çözülmüş veriyi buf'a geri kopyala
+        memcpy(buf, decrypted_data.GetData(), decrypted_data.GetDataSize());
+    }
+    
     if (ret > 0)
         goto end;
 
