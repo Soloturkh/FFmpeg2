@@ -786,6 +786,8 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         }
     }
 
+    av_log(s, AV_LOG_INFO, "DASH defans manifest: %s\n", root_url);
+
     size = strlen(root_url);
     isRootHttp = ishttp(root_url);
 
