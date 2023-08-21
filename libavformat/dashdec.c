@@ -781,7 +781,12 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
             if (base_path[strlen(base_path) - 1] != '/') {
                 av_strlcat(base_path, "/", MAX_URL_SIZE);
             }
-            root_url = base_path;
+            root_url = av_strdup(base_path);  // Burada root_url için ayrı bir bellek bölgesi ayırıyoruz.
+            if (!root_url) {
+                av_log(s, AV_LOG_ERROR, "Memory allocation error.\n");
+                av_free(base_path);
+                return AVERROR(ENOMEM);
+            }
             av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: %s\n", root_url);
             av_free(base_path);
         } else {
