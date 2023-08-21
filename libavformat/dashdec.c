@@ -703,7 +703,7 @@ static int parse_manifest_segmenttimeline(AVFormatContext *s, struct representat
     return 0;
 }
 
-static int resolve_content_path(AVFormatContext *s, const char *url, int *max_url_size, xmlNodePtr *baseurl_nodes, int n_baseurl_nodes)
+static int resolve_content_path(AVFormatContext *s, const char *url, int *max_url_size, xmlNodePtr *baseurl_nodes, int n_baseurl_nodes, AVDictionary *http_opts)
 {
     DASHContext *c = s->priv_data;  // FFmpeg DASH context'ini al.
     char *tmp_str = NULL;
@@ -768,9 +768,11 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         xmlFree(text);
     }
 
+    AVDictionaryEntry *redirected_url_entry = av_dict_get(http_opts, "location", NULL, 0);
     if (c->use_redirected_url && c->base_url) {
         // Eğer 'use_redirected_url' ayarlıysa ve 'base_url' mevcutsa
-        root_url = c->base_url;  // 'root_url' olarak yönlendirilen URL'yi kullan.
+        //root_url = c->base_url;  // 'root_url' olarak yönlendirilen URL'yi kullan.
+        root_url = redirected_url_entry->value;
     } else {
         // Aksi halde orijinal 'root_url' çözümleme mantığı çalışır.
         node = baseurl_nodes[rootId];
@@ -903,7 +905,23 @@ static int parse_manifest_representation(AVFormatContext *s, const char *url,
     baseurl_nodes[2] = adaptionset_baseurl_node;
     baseurl_nodes[3] = representation_baseurl_node;
 
+    // -------------- 2. ADIM: `http_opts` Sözlüğünü Doldurma -------------- 
+    AVDictionary *http_opts = NULL;
+    av_dict_set(&http_opts, "key", "value", 0);  // Örnek bir anahtar-değer ayarı.
+     // --------------------------------------------------------------------
+    
     ret = resolve_content_path(s, url, &c->max_url_size, baseurl_nodes, 4);
+
+    // -------------- 3. ADIM: Yönlendirme Kontrolü -------------- 
+    if (ret == AVERROR_HTTP_MOVED) {
+        AVDictionaryEntry *entry = av_dict_get(http_opts, "location", NULL, 0);
+        if (entry) {
+            av_free(c->base_url);
+            c->base_url = av_strdup(entry->value);
+        }
+    }
+    // ------------------------------------------------------------
+    
     c->max_url_size = aligned(c->max_url_size
                               + (rep->id ? strlen(rep->id) : 0)
                               + (rep_bandwidth_val ? strlen(rep_bandwidth_val) : 0));
@@ -925,6 +943,13 @@ static int parse_manifest_representation(AVFormatContext *s, const char *url,
                 goto enomem;
             }
             c->max_url_size = aligned(c->max_url_size  + strlen(val));
+            // -------------- 4. ADIM: Yönlendirilen URL'yi Kullanarak Yolu Çözümleme -------------- 
+            const char *root_url = url; // varsayılan olarak ana URL'yi kullan
+            AVDictionaryEntry *redirected_url_entry = av_dict_get(http_opts, "location", NULL, 0);
+            if (c->use_redirected_url && redirected_url_entry) {
+                root_url = redirected_url_entry->value; // yönlendirilen URL'yi kullan
+            }
+            // ------------------------------------------------------------------------------------- 
             rep->init_section->url = get_content_url(baseurl_nodes, 4,
                                                      c->max_url_size, rep->id,
                                                      rep_bandwidth_val, val);
