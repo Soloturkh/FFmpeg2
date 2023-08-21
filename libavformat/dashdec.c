@@ -912,10 +912,10 @@ static int parse_manifest_representation(AVFormatContext *s, const char *url,
     av_dict_set(&http_opts, "key", "value", 0);  // Örnek bir anahtar-değer ayarı.
      // --------------------------------------------------------------------
     
-    ret = resolve_content_path(s, url, &c->max_url_size, baseurl_nodes, 4);
+    ret = resolve_content_path(s, url, &c->max_url_size, baseurl_nodes, 4, http_opts);
 
     // -------------- 3. ADIM: Yönlendirme Kontrolü -------------- 
-    if (ret == AVERROR_HTTP_MOVED) {
+    if (ret == AVERROR_HTTP_NOT_FOUND) {  // Replace AVERROR_HTTP_MOVED with a valid constant from FFmpeg
         AVDictionaryEntry *entry = av_dict_get(http_opts, "location", NULL, 0);
         if (entry) {
             av_free(c->base_url);
