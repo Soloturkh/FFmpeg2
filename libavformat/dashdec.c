@@ -768,11 +768,9 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         xmlFree(text);
     }
 
-    redirected_url_entry = av_dict_get(http_opts, "location", NULL, 0);
     if (c->use_redirected_url && c->base_url) {
         // Eğer 'use_redirected_url' ayarlıysa ve 'base_url' mevcutsa
-        //root_url = c->base_url;  // 'root_url' olarak yönlendirilen URL'yi kullan.
-        baseurl = redirected_url_entry->value;
+        root_url = c->base_url;  // 'root_url' olarak yönlendirilen URL'yi kullan.
     } else {
         // Aksi halde orijinal 'root_url' çözümleme mantığı çalışır.
         node = baseurl_nodes[rootId];
