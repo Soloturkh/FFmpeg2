@@ -723,6 +723,8 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
     int i;
     int tmp_max_url_size = strlen(url);
 
+    AVDictionaryEntry *redirected_url_entry = NULL;
+    
     for (i = n_baseurl_nodes-1; i >= 0 ; i--) {
         text = xmlNodeGetContent(baseurl_nodes[i]);
         if (!text)
@@ -768,11 +770,11 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         xmlFree(text);
     }
 
-    AVDictionaryEntry *redirected_url_entry = av_dict_get(http_opts, "location", NULL, 0);
+    redirected_url_entry = av_dict_get(http_opts, "location", NULL, 0);
     if (c->use_redirected_url && c->base_url) {
         // Eğer 'use_redirected_url' ayarlıysa ve 'base_url' mevcutsa
         //root_url = c->base_url;  // 'root_url' olarak yönlendirilen URL'yi kullan.
-        root_url = redirected_url_entry->value;
+        baseurl = redirected_url_entry->value;
     } else {
         // Aksi halde orijinal 'root_url' çözümleme mantığı çalışır.
         node = baseurl_nodes[rootId];
