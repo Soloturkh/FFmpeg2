@@ -771,6 +771,7 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
     if (c->use_redirected_url && c->base_url) {
         // Eğer 'use_redirected_url' ayarlıysa ve 'base_url' mevcutsa
         root_url = c->base_url;  // 'root_url' olarak yönlendirilen URL'yi kullan.
+        av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: %s\n", root_url);
     } else {
         // Aksi halde orijinal 'root_url' çözümleme mantığı çalışır.
         node = baseurl_nodes[rootId];
