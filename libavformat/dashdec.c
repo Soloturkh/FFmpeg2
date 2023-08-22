@@ -777,8 +777,14 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
     }
 
     if (c->use_redirected_url) {
-      if (rootId == 0) {
-            root_url = av_strdup(url);  // yönlendirilen URL'yi root_url olarak kullan
+      if (rootId == 0 && c->base_url != NULL) {
+            char *base_path = av_strdup(c->base_url);
+            if (!base_path) {
+               av_log(s, AV_LOG_ERROR, "Memory allocation error for base_path.\n");
+               return AVERROR(ENOMEM);
+            }
+          
+            root_url = av_strdup(strstr(base_path, av_basename(c->base_url)));  // yönlendirilen URL'yi root_url olarak kullan
             if (!root_url) {
                 av_log(s, AV_LOG_ERROR, "Memory allocation error.\n");
                 return AVERROR(ENOMEM);
@@ -788,6 +794,7 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
             if (root_url[strlen(root_url) - 1] != '/') {
                 av_strlcat(root_url, "/", MAX_URL_SIZE);
             }
+            av_free(base_path);
         }
         av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: root_url %s\n", root_url);
     }
