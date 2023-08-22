@@ -797,9 +797,9 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         node = baseurl_nodes[rootId];
         baseurl = xmlNodeGetContent(node);
         root_url = (av_strcasecmp(baseurl, "")) ? baseurl : path;
-        av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: %s\n", node);
-        av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: %s\n", baseurl);
-        av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: %s\n", root_url);
+        av_log(s, AV_LOG_INFO, "Using redirected URL for DASH node: %s\n", node);
+        av_log(s, AV_LOG_INFO, "Using redirected URL for DASH base_url: %s\n", baseurl);
+        av_log(s, AV_LOG_INFO, "Using redirected URL for DASH root_url: %s\n", root_url);
         if (node) {
             xmlNodeSetContent(node, root_url);
             updated = 1;
