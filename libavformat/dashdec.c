@@ -159,6 +159,7 @@ typedef struct DASHContext {
 
     /* Defans relative Baglanti */
     int use_redirected_url;
+    char redirected_url[MAX_URL_SIZE];
 
 } DASHContext;
 
@@ -794,6 +795,7 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
             if (root_url[strlen(root_url) - 1] != '/') {
                 av_strlcat(root_url, "/", MAX_URL_SIZE);
             }
+            av_strlcpy(c->redirected_url, root_url, sizeof(c->redirected_url));
             av_free(base_path);
         }
         av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: root_url %s\n", root_url);
