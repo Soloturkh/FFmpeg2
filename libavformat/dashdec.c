@@ -1741,6 +1741,7 @@ static int open_input(DASHContext *c, struct representation *pls, struct fragmen
     AVDictionary *opts = NULL;
     char *url = NULL;
     int ret = 0;
+    const char *base_url_to_use;
 
     url = av_mallocz(c->max_url_size);
     if (!url) {
@@ -1755,7 +1756,15 @@ static int open_input(DASHContext *c, struct representation *pls, struct fragmen
         av_dict_set_int(&opts, "end_offset", seg->url_offset + seg->size, 0);
     }
 
-    ff_make_absolute_url(url, c->max_url_size, c->base_url, seg->url);
+    // Eğer yönlendirme seçeneği aktifse ve yönlendirilen URL varsa, bu URL'yi kullan.
+    if (c->use_redirected_url && c->redirected_url) {
+        base_url_to_use = c->redirected_url;
+    } else {
+        base_url_to_use = c->base_url;
+    }
+    
+    ff_make_absolute_url(url, c->max_url_size, base_url_to_use, seg->url);
+    //ff_make_absolute_url(url, c->max_url_size, c->base_url, seg->url);
     av_log(pls->parent, AV_LOG_VERBOSE, "DASH request for url '%s', offset %"PRId64"\n",
            url, seg->url_offset);
     ret = open_url(pls->parent, &pls->input, url, &c->avio_opts, opts, NULL);
