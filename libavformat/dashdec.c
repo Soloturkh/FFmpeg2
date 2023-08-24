@@ -774,65 +774,6 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         xmlNodeSetContent(node, root_url);
         updated = 1;
     }
-    /*
-    if (c->use_redirected_url) {
-      if (rootId == 0 && c->base_url != NULL) {
-            char *base_path = av_strdup(c->base_url);
-            if (!base_path) {
-               av_log(s, AV_LOG_ERROR, "Memory allocation error for base_path.\n");
-               return AVERROR(ENOMEM);
-            }
-
-            char *suffix_start = strstr(base_path, av_basename(c->base_url));
-            if (suffix_start) {
-                *suffix_start = '\0';
-            }
-            root_url = av_strdup(base_path);  // yönlendirilen URL'yi root_url olarak kullan
-            if (!root_url) {
-                av_log(s, AV_LOG_ERROR, "Memory allocation error.\n");
-                av_free(base_path);
-                return AVERROR(ENOMEM);
-            }
-
-            // root_url sonunda bir '/' karakteri olup olmadığını kontrol et
-            if (root_url[strlen(root_url) - 1] != '/') {
-                av_strlcat(root_url, "/", MAX_URL_SIZE);
-            }
-            av_strlcpy(c->redirected_url, root_url, sizeof(c->redirected_url));
-            av_free(base_path);
-        }
-        av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: root_url %s\n", root_url);
-    }
-    */
-    /*
-    if (c->use_redirected_url) {
-        if (c->base_url && rootId == 0) {
-            char *base_path = NULL;
-            //root_url = c->base_url;  // 'root_url' olarak yönlendirilen URL'yi kullan.
-            base_path = av_strdup(c->base_url);
-            if (!base_path || base_path[0] == '\0') {
-                av_log(s, AV_LOG_ERROR, "Dash Base Null olarak geliyor veya base_url bos geliyor.\n");
-                return AVERROR(ENOMEM);
-            }
-            *(strstr(base_path, av_basename(c->base_url))) = '\0';
-            if (base_path[strlen(base_path) - 1] != '/') {
-                av_strlcat(base_path, "/", MAX_URL_SIZE);
-            }
-            root_url = av_strdup(base_path);  // Burada root_url için ayrı bir bellek bölgesi ayırıyoruz.
-            baseurl = av_strdup(base_path);
-            if (!root_url) {
-                av_log(s, AV_LOG_ERROR, "Dash root_url bos orjinal yol tanımlanamadı.\n");
-                av_free(base_path);
-                return AVERROR(ENOMEM);
-            }
-            av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: root_url %s\n", root_url);
-            av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: base_url %s\n", baseurl);
-            av_free(base_path);
-        } else {
-            av_log(s, AV_LOG_WARNING, "use_redirected_url is set, but base_url is empty. Not using redirection.\n");
-        }
-    }
-    */
 
     size = strlen(root_url);
     isRootHttp = ishttp(root_url);
