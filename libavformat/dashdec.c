@@ -157,9 +157,6 @@ typedef struct DASHContext {
     int is_init_section_common_audio;
     int is_init_section_common_subtitle;
 
-    /* Defans relative Baglanti */
-    int use_redirected_url;
-
 } DASHContext;
 
 static int ishttp(char *url)
@@ -1646,7 +1643,7 @@ static struct fragment *get_current_fragment(struct representation *pls)
             av_free(seg);
             return NULL;
         }
-        ff_dash_fill_tmpl_params(tmpfilename, c->max_url_size, pls->url_template, 0, pls->cur_seq_no, 0, get_segment_start_time_based_on_timeline(pls, pls->cur_seq_no));        
+        ff_dash_fill_tmpl_params(tmpfilename, c->max_url_size, pls->url_template, 0, pls->cur_seq_no, 0, get_segment_start_time_based_on_timeline(pls, pls->cur_seq_no));
         seg->url = av_strireplace(pls->url_template, pls->url_template, tmpfilename);
         if (!seg->url) {
             av_log(pls->parent, AV_LOG_WARNING, "Unable to resolve template url '%s', try to use origin template\n", pls->url_template);
@@ -2036,23 +2033,27 @@ static int dash_read_header(AVFormatContext *s)
 
     if ((ret = ffio_copy_url_options(s->pb, &c->avio_opts)) < 0)
         return ret;
-    //defans
-    if (c->use_redirected_url) {
-        // s->url'yi son yönlendirilen URL ile güncelleme
-        char *location = NULL;
-        if (av_opt_get(s->pb, "location", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&location) < 0) {
-            av_log(s, AV_LOG_WARNING, "Failed to get location from AVIOContext.\n");
-        } else {
-            // location başarılı bir şekilde alındıysa, s->url güncellenir.
-            av_freep(&s->url); // mevcut s->url'nin hafızasını serbest bırak
-            s->url = location; // s->url'yi yeni location ile güncelle
-            av_log(s, AV_LOG_INFO, "URL updated to: %s\n", s->url);
-        }
-    }
-    //defans
+
     if ((ret = parse_manifest(s, s->url, s->pb)) < 0)
         return ret;
 
+     //defans
+char *location = NULL;
+if (av_opt_get(s->pb, "location", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&location) < 0) {
+    av_log(s, AV_LOG_WARNING, "Failed to get location from AVIOContext.\n");
+} else {
+    // location başarılı bir şekilde alındıysa ve s->url zaten location ile aynı değilse, s->url güncellenir.
+    if (!s->url || strcmp(s->url, location) != 0) {
+        av_freep(&s->url); // mevcut s->url'nin hafızasını serbest bırak
+        s->url = location; // s->url'yi yeni location ile güncelle
+        av_log(s, AV_LOG_INFO, "URL updated to: %s\n", s->url);
+    } else {
+        // Eğer s->url zaten location ile aynıysa, location'ın hafızasını serbest bırak
+        av_freep(&location);
+    }
+}
+    //defans
+    
     /* If this isn't a live stream, fill the total duration of the
      * stream. */
     if (!c->is_live) {
@@ -2370,7 +2371,6 @@ static const AVOption dash_options[] = {
         {.str = "aac,m4a,m4s,m4v,mov,mp4,webm,ts"},
         INT_MIN, INT_MAX, FLAGS},
     { "defanskey", "Media decryption key (hex)", OFFSET(cenc_decryption_key), AV_OPT_TYPE_STRING, {.str = NULL}, INT_MIN, INT_MAX, .flags = FLAGS },
-    { "use_redirected_url", "Use the redirected URL for resolving relative URLs", OFFSET(use_redirected_url), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, FLAGS},
     {NULL}
 };
 
