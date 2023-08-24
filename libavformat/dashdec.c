@@ -2038,20 +2038,20 @@ static int dash_read_header(AVFormatContext *s)
         return ret;
 
      //defans
-char *location = NULL;
-if (av_opt_get(s->pb, "location", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&location) < 0) {
-    av_log(s, AV_LOG_WARNING, "Failed to get location from AVIOContext.\n");
-} else {
-    // location başarılı bir şekilde alındıysa ve s->url zaten location ile aynı değilse, s->url güncellenir.
-    if (!s->url || strcmp(s->url, location) != 0) {
-        av_freep(&s->url); // mevcut s->url'nin hafızasını serbest bırak
-        s->url = location; // s->url'yi yeni location ile güncelle
-        av_log(s, AV_LOG_INFO, "URL updated to: %s\n", s->url);
+    char *location = NULL;
+    if (av_opt_get(s->pb, "location", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&location) < 0) {
+        av_log(s, AV_LOG_WARNING, "Failed to get location from AVIOContext.\n");
     } else {
-        // Eğer s->url zaten location ile aynıysa, location'ın hafızasını serbest bırak
-        av_freep(&location);
+        // location başarılı bir şekilde alındıysa ve s->url zaten location ile aynı değilse, s->url güncellenir.
+        if (!s->url || strcmp(s->url, location) != 0) {
+            av_freep(&s->url); // mevcut s->url'nin hafızasını serbest bırak
+            s->url = location; // s->url'yi yeni location ile güncelle
+            av_log(s, AV_LOG_INFO, "URL updated to: %s\n", s->url);
+        } else {
+            // Eğer s->url zaten location ile aynıysa, location'ın hafızasını serbest bırak
+            av_freep(&location);
+        }
     }
-}
     //defans
     
     /* If this isn't a live stream, fill the total duration of the
