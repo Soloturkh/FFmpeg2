@@ -784,10 +784,15 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
                av_log(s, AV_LOG_ERROR, "Memory allocation error for base_path.\n");
                return AVERROR(ENOMEM);
             }
-          
-            root_url = av_strdup(strstr(base_path, av_basename(c->base_url)));  // yönlendirilen URL'yi root_url olarak kullan
+
+            char *suffix_start = strstr(base_path, av_basename(c->base_url));
+            if (suffix_start) {
+                *suffix_start = '\0';
+            }
+            root_url = av_strdup(base_path);  // yönlendirilen URL'yi root_url olarak kullan
             if (!root_url) {
                 av_log(s, AV_LOG_ERROR, "Memory allocation error.\n");
+                av_free(base_path);
                 return AVERROR(ENOMEM);
             }
 
