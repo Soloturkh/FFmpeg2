@@ -159,7 +159,6 @@ typedef struct DASHContext {
 
     /* Defans relative Baglanti */
     int use_redirected_url;
-    char redirected_url[MAX_URL_SIZE];
 
 } DASHContext;
 
@@ -706,7 +705,6 @@ static int parse_manifest_segmenttimeline(AVFormatContext *s, struct representat
 
 static int resolve_content_path(AVFormatContext *s, const char *url, int *max_url_size, xmlNodePtr *baseurl_nodes, int n_baseurl_nodes)
 {
-    DASHContext *c = s->priv_data;  // FFmpeg DASH context'ini al.
     char *tmp_str = NULL;
     char *path = NULL;
     char *mpdName = NULL;
