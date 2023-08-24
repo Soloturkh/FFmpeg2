@@ -865,8 +865,12 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
                 p = strchr(p, '/');
                 memset(p + 1, 0, strlen(p));
             }
+            av_log(s, AV_LOG_INFO, "text + start %s\n", text + start);
+            av_log(s, AV_LOG_INFO, "tmp_max_url_size %s\n", tmp_max_url_size);
             av_strlcat(tmp_str, text + start, tmp_max_url_size);
             xmlNodeSetContent(baseurl_nodes[i], tmp_str);
+            av_log(s, AV_LOG_INFO, "baseurl_nodes [i] %s\n", i);
+            av_log(s, AV_LOG_INFO, "tmp_str %s\n", tmp_str);
             updated = 1;
             xmlFree(text);
         }
