@@ -2033,11 +2033,8 @@ static int dash_read_header(AVFormatContext *s)
 
     if ((ret = ffio_copy_url_options(s->pb, &c->avio_opts)) < 0)
         return ret;
-
-    if ((ret = parse_manifest(s, s->url, s->pb)) < 0)
-        return ret;
-
-     //defans
+     
+    //defans
     char *location = NULL;
     if (av_opt_get(s->pb, "location", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&location) < 0) {
         av_log(s, AV_LOG_WARNING, "Failed to get location from AVIOContext.\n");
@@ -2053,6 +2050,9 @@ static int dash_read_header(AVFormatContext *s)
         }
     }
     //defans
+    
+    if ((ret = parse_manifest(s, s->url, s->pb)) < 0)
+        return ret;
     
     /* If this isn't a live stream, fill the total duration of the
      * stream. */
