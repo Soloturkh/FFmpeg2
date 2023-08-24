@@ -776,7 +776,7 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         xmlNodeSetContent(node, root_url);
         updated = 1;
     }
-
+    /*
     if (c->use_redirected_url) {
       if (rootId == 0 && c->base_url != NULL) {
             char *base_path = av_strdup(c->base_url);
@@ -805,6 +805,7 @@ static int resolve_content_path(AVFormatContext *s, const char *url, int *max_ur
         }
         av_log(s, AV_LOG_INFO, "Using redirected URL for DASH manifest: root_url %s\n", root_url);
     }
+    */
     /*
     if (c->use_redirected_url) {
         if (c->base_url && rootId == 0) {
@@ -2097,6 +2098,23 @@ static int dash_read_header(AVFormatContext *s)
     if ((ret = ffio_copy_url_options(s->pb, &c->avio_opts)) < 0)
         return ret;
 
+    if (c->use_redirected_url) {
+        // s->url'yi son yönlendirilen URL ile güncelleme
+        if (s->pb->filename) {
+            av_log(s, AV_LOG_INFO, "Using the latest redirected URL from pb: %s\n", s->pb->filename);
+            
+            // Önceki s->url'nin hafızasını serbest bırakın
+            av_freep(&s->url);
+            
+            // Yeni URL için hafızada yer ayırın ve s->url'yi güncelleyin
+            s->url = av_strdup(s->pb->filename);
+            if (!s->url) {
+                av_log(s, AV_LOG_ERROR, "Memory allocation error for new s->url.\n");
+                return AVERROR(ENOMEM);
+            }
+        }
+    }
+    
     if ((ret = parse_manifest(s, s->url, s->pb)) < 0)
         return ret;
 
