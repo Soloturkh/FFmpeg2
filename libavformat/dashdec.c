@@ -1747,6 +1747,7 @@ static int open_input(DASHContext *c, struct representation *pls, struct fragmen
     char *url = NULL;
     int ret = 0;
     const char *base_url_to_use;
+    
     url = av_mallocz(c->max_url_size);
     if (!url) {
         ret = AVERROR(ENOMEM);
