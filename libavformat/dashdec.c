@@ -2096,6 +2096,11 @@ static int dash_read_header(AVFormatContext *s)
     if ((ret = ffio_copy_url_options(s->pb, &c->avio_opts)) < 0)
         return ret;
     //defans
+    AVDictionaryEntry *entry = av_dict_get(c->avio_opts, "filename", NULL, 0);
+    if (entry && entry->value) {
+        av_log(s, AV_LOG_INFO, "Filename from avio_opts: %s\n", entry->value);
+    }
+    
     URLContext *url_ctx = ffio_geturlcontext(s->pb);
     const char *filename = NULL;
 
