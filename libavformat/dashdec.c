@@ -1706,16 +1706,8 @@ static struct fragment *get_current_fragment(struct representation *pls)
             av_free(seg);
             return NULL;
         }
-        ff_dash_fill_tmpl_params(tmpfilename, c->max_url_size, pls->url_template, 0, pls->cur_seq_no, 0, get_segment_start_time_based_on_timeline(pls, pls->cur_seq_no));
-
-        av_log(pls->parent, AV_LOG_DEBUG, "ff_dash_fill_tmpl_params called with:\n");
-        av_log(pls->parent, AV_LOG_DEBUG, "tmpfilename: %s\n", tmpfilename);
-        av_log(pls->parent, AV_LOG_DEBUG, "c->max_url_size: %d\n", c->max_url_size);
-        av_log(pls->parent, AV_LOG_DEBUG, "pls->url_template: %s\n", pls->url_template);
-        av_log(pls->parent, AV_LOG_DEBUG, "pls->cur_seq_no: %"PRId64"\n", pls->cur_seq_no);
-        
+        ff_dash_fill_tmpl_params(tmpfilename, c->max_url_size, pls->url_template, 0, pls->cur_seq_no, 0, get_segment_start_time_based_on_timeline(pls, pls->cur_seq_no));        
         seg->url = av_strireplace(pls->url_template, pls->url_template, tmpfilename);
-        av_log(pls->parent, AV_LOG_DEBUG, "av_strireplace result (seg->url): %s\n", seg->url);
         if (!seg->url) {
             av_log(pls->parent, AV_LOG_WARNING, "Unable to resolve template url '%s', try to use origin template\n", pls->url_template);
             seg->url = av_strdup(pls->url_template);
