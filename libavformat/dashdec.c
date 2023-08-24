@@ -1707,7 +1707,15 @@ static struct fragment *get_current_fragment(struct representation *pls)
             return NULL;
         }
         ff_dash_fill_tmpl_params(tmpfilename, c->max_url_size, pls->url_template, 0, pls->cur_seq_no, 0, get_segment_start_time_based_on_timeline(pls, pls->cur_seq_no));
+
+        av_log(pls->parent, AV_LOG_DEBUG, "ff_dash_fill_tmpl_params called with:\n");
+        av_log(pls->parent, AV_LOG_DEBUG, "tmpfilename: %s\n", tmpfilename);
+        av_log(pls->parent, AV_LOG_DEBUG, "c->max_url_size: %d\n", c->max_url_size);
+        av_log(pls->parent, AV_LOG_DEBUG, "pls->url_template: %s\n", pls->url_template);
+        av_log(pls->parent, AV_LOG_DEBUG, "pls->cur_seq_no: %"PRId64"\n", pls->cur_seq_no);
+        
         seg->url = av_strireplace(pls->url_template, pls->url_template, tmpfilename);
+        av_log(pls->parent, AV_LOG_DEBUG, "av_strireplace result (seg->url): %s\n", seg->url);
         if (!seg->url) {
             av_log(pls->parent, AV_LOG_WARNING, "Unable to resolve template url '%s', try to use origin template\n", pls->url_template);
             seg->url = av_strdup(pls->url_template);
@@ -1746,8 +1754,7 @@ static int open_input(DASHContext *c, struct representation *pls, struct fragmen
     AVDictionary *opts = NULL;
     char *url = NULL;
     int ret = 0;
-    const char *base_url_to_use;
-    
+
     url = av_mallocz(c->max_url_size);
     if (!url) {
         ret = AVERROR(ENOMEM);
@@ -1760,24 +1767,8 @@ static int open_input(DASHContext *c, struct representation *pls, struct fragmen
         av_dict_set_int(&opts, "offset", seg->url_offset, 0);
         av_dict_set_int(&opts, "end_offset", seg->url_offset + seg->size, 0);
     }
-    // Eğer yönlendirme seçeneği aktifse ve yönlendirilen URL varsa, bu URL'yi kullan.
-    if (c->use_redirected_url && c->redirected_url) {
-        base_url_to_use = c->redirected_url;
-    } else {
-        base_url_to_use = c->base_url;
-    }
-    av_log(pls->parent, AV_LOG_DEBUG, "Before calling ff_make_absolute_url:\n");
-    av_log(pls->parent, AV_LOG_DEBUG, "url (initial): %s\n", url);
-    av_log(pls->parent, AV_LOG_DEBUG, "c->max_url_size: %d\n", c->max_url_size);
-    av_log(pls->parent, AV_LOG_DEBUG, "c->base_url: %s\n", c->base_url);
-    av_log(pls->parent, AV_LOG_DEBUG, "seg->url: %s\n", seg->url);
-    
-    ff_make_absolute_url(url, c->max_url_size, c->base_url, seg->url);
 
-    av_log(pls->parent, AV_LOG_DEBUG, "After calling ff_make_absolute_url:\n");
-    av_log(pls->parent, AV_LOG_DEBUG, "url (result): %s\n", url);
-    av_log(pls->parent, AV_LOG_DEBUG, "base_url_to_use: %s\n", base_url_to_use);
-    
+    ff_make_absolute_url(url, c->max_url_size, c->base_url, seg->url);
     av_log(pls->parent, AV_LOG_VERBOSE, "DASH request for url '%s', offset %"PRId64"\n",
            url, seg->url_offset);
     ret = open_url(pls->parent, &pls->input, url, &c->avio_opts, opts, NULL);
