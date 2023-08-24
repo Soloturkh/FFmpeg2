@@ -2095,28 +2095,33 @@ static int dash_read_header(AVFormatContext *s)
 
     if ((ret = ffio_copy_url_options(s->pb, &c->avio_opts)) < 0)
         return ret;
-    AVDictionaryEntry *entry = av_dict_get(c->avio_opts, "filename", NULL, 0);
-    if (entry && entry->value) {
-        av_log(s, AV_LOG_INFO, "Filename from avio_opts: %s\n", entry->value);
-        // Diğer işlemler...
+    //defans
+    URLContext *url_ctx = ffio_geturlcontext(s->pb);
+    const char *filename = NULL;
+
+    if (url_ctx) {
+        filename = url_ctx->filename;
     }
-    if (c->use_redirected_url) {
+
+    if (filename) {
+        av_log(s, AV_LOG_INFO, "Filename from URLContext: %s\n", filename);
+    }
+
+    if (c->use_redirected_url && filename) {
         // s->url'yi son yönlendirilen URL ile güncelleme
-        if (s->pb->filename) {
-            av_log(s, AV_LOG_INFO, "Using the latest redirected URL from pb: %s\n", s->pb->filename);
-            
-            // Önceki s->url'nin hafızasını serbest bırakın
-            av_freep(&s->url);
-            
-            // Yeni URL için hafızada yer ayırın ve s->url'yi güncelleyin
-            s->url = av_strdup(s->pb->filename);
-            if (!s->url) {
-                av_log(s, AV_LOG_ERROR, "Memory allocation error for new s->url.\n");
-                return AVERROR(ENOMEM);
-            }
+        av_log(s, AV_LOG_INFO, "Using the latest redirected URL: %s\n", filename);
+
+        // Önceki s->url'nin hafızasını serbest bırakın
+        av_freep(&s->url);
+
+        // Yeni URL için hafızada yer ayırın ve s->url'yi güncelleyin
+        s->url = av_strdup(filename);
+        if (!s->url) {
+            av_log(s, AV_LOG_ERROR, "Memory allocation error for new s->url.\n");
+            return AVERROR(ENOMEM);
         }
     }
-    
+    //defans
     if ((ret = parse_manifest(s, s->url, s->pb)) < 0)
         return ret;
 
