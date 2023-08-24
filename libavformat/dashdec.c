@@ -2096,34 +2096,16 @@ static int dash_read_header(AVFormatContext *s)
     if ((ret = ffio_copy_url_options(s->pb, &c->avio_opts)) < 0)
         return ret;
     //defans
-    AVDictionaryEntry *entry = NULL;
-    while ((entry = av_dict_get(c->avio_opts, "", entry, AV_DICT_IGNORE_SUFFIX))) {
-        av_log(s, AV_LOG_INFO, "Key: %s, Value: %s\n", entry->key, entry->value);
-    }
-    
-    URLContext *url_ctx = ffio_geturlcontext(s->pb);
-    const char *filename = NULL;
-
-    if (url_ctx) {
-        filename = url_ctx->filename;
-    }
-
-    if (filename) {
-        av_log(s, AV_LOG_INFO, "Filename from URLContext: %s\n", filename);
-    }
-
-    if (c->use_redirected_url && filename) {
+    if (c->use_redirected_url) {
         // s->url'yi son yönlendirilen URL ile güncelleme
-        av_log(s, AV_LOG_INFO, "Using the latest redirected URL: %s\n", filename);
-
-        // Önceki s->url'nin hafızasını serbest bırakın
-        av_freep(&s->url);
-
-        // Yeni URL için hafızada yer ayırın ve s->url'yi güncelleyin
-        s->url = av_strdup(filename);
-        if (!s->url) {
-            av_log(s, AV_LOG_ERROR, "Memory allocation error for new s->url.\n");
-            return AVERROR(ENOMEM);
+        char *location = NULL;
+        if (av_opt_get(s->pb, "location", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&location) < 0) {
+            av_log(s, AV_LOG_WARNING, "Failed to get location from AVIOContext.\n");
+        } else {
+            // location başarılı bir şekilde alındıysa, s->url güncellenir.
+            av_freep(&s->url); // mevcut s->url'nin hafızasını serbest bırak
+            s->url = location; // s->url'yi yeni location ile güncelle
+            av_log(s, AV_LOG_INFO, "URL updated to: %s\n", s->url);
         }
     }
     //defans
