@@ -430,6 +430,7 @@ extern const AVInputFormat  ff_sln_demuxer;
 extern const AVInputFormat  ff_smacker_demuxer;
 extern const AVInputFormat  ff_smjpeg_demuxer;
 extern const FFOutputFormat ff_smjpeg_muxer;
+extern const AVInputFormat  ff_smoothstreaming_demuxer;
 extern const FFOutputFormat ff_smoothstreaming_muxer;
 extern const AVInputFormat  ff_smush_demuxer;
 extern const AVInputFormat  ff_sol_demuxer;
