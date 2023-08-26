@@ -5156,7 +5156,6 @@ static int mov_read_tfhd(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     track_id = avio_rb32(pb);
     if (!track_id)
         return AVERROR_INVALIDDATA;
-    frag->track_id = track_id;
     //for (i = 0; i < c->trex_count; i++)
     //    if (c->trex_data[i].track_id == track_id) {
     //        trex = &c->trex_data[i];
