@@ -4755,7 +4755,6 @@ static int mov_read_trak(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 
     return 0;
 }
-
 static int mov_read_traf(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     AVStream *st;
