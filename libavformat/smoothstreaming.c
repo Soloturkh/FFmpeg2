@@ -229,7 +229,8 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
         bio = avio_alloc_context(buf, len, 0, NULL, NULL, NULL, NULL);
         if (!bio)
             return AVERROR(ENOMEM);
-        ret = ff_get_wav_header(bio, st->codecpar, len);
+	//ret = ff_get_wav_header(bio, st->codec, len);
+        ret = ff_get_wav_header(st, bio, st->codecpar, len, 0);
         if (ret < 0)
             return ret;
         st->need_parsing = AVSTREAM_PARSE_FULL_RAW;
