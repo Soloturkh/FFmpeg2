@@ -144,7 +144,7 @@ static int read_data(void *opaque, uint8_t *buf, int buf_size)
     goto restart;
 }
 
-static int smoothstreaming_set_extradata(AVCodecContext *codec, const char *extra)
+static int smoothstreaming_set_extradata(AVFormatContext *codecpar, const char *extra)
 {
     int size = 0;
     uint8_t *buf = NULL;
@@ -162,7 +162,7 @@ static int smoothstreaming_set_extradata(AVCodecContext *codec, const char *extr
     return codecpar->extradata_size;
 }
 
-static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char *extra)
+static int smoothstreaming_set_extradata_h264(AVFormatContext *codecpar, const char *extra)
 {
     int size = 0, ret = 0;
     int i, count;
