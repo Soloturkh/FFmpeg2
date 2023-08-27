@@ -120,8 +120,10 @@ static int read_data(void *opaque, uint8_t *buf, int buf_size)
             av_dict_set(&opts, "seekable", "0", 0);
             frag = &si->frags[si->cur_frag];
             make_frag_url(si, si->qualities[si->cur_quality].bit_rate, frag->start_ts, &url[0], sizeof(url));
-            ret = ffurl_open(&si->input, url, AVIO_FLAG_READ,
-                             &si->parent->interrupt_callback, &opts);
+            //ret = ffurl_open(&si->input, url, AVIO_FLAG_READ,
+            //                 &si->parent->interrupt_callback, &opts);
+            ret = avio_open2(&si->input, url, AVIO_FLAG_READ, 
+                               &si->parent->interrupt_callback, &opts);
             av_dict_free(&opts);
             if (ret < 0)
                 return ret;
@@ -151,7 +153,7 @@ static int smoothstreaming_set_extradata(AVCodecContext *codec, const char *extr
     new_size = strlen(extra) / 2;
     if (new_size >= INT_MAX)
         return AVERROR_INVALIDDATA;
-    buf = av_mallocz((new_size + FF_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
+    buf = av_mallocz((new_size + AV_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
     if (!buf)
         return AVERROR(ENOMEM);
     size = ff_hex_to_data(buf, extra);
@@ -171,7 +173,7 @@ static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char 
     new_size = strlen(extra) / 2;
     if (new_size >= INT_MAX)
         return AVERROR_INVALIDDATA;
-    buf = av_mallocz((new_size + FF_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
+    buf = av_mallocz((new_size + AV_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
     if (!buf)
         return AVERROR(ENOMEM);
     size = ff_hex_to_data(buf, extra);
@@ -189,7 +191,7 @@ static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char 
     }
 
     new_size = size + count * 4;
-    buf = av_mallocz((new_size + FF_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
+    buf = av_mallocz((new_size + AV_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
     if (!buf)
         return AVERROR(ENOMEM);
 
@@ -219,7 +221,7 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
         len = strlen(q->private_str) / 2;
         if (len >= INT_MAX)
             return AVERROR_INVALIDDATA;
-        buf = av_mallocz((len + FF_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
+        buf = av_mallocz((len + AV_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
         if (!buf)
             return AVERROR(ENOMEM);
         len = ff_hex_to_data(buf, q->private_str);
