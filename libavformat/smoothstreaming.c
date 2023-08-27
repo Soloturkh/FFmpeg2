@@ -28,6 +28,7 @@
 
 #include "libavutil/avstring.h"
 #include "libavutil/time.h"
+#include "libavcodec/avcodec.h"
 
 #include "avformat.h"
 #include "internal.h"
