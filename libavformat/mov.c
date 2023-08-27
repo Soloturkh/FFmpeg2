@@ -4773,7 +4773,8 @@ static int mov_read_traf(MOVContext *c, AVIOContext *pb, MOVAtom atom)
         }
 
         st->priv_data = sc;
-        st->codec->codec_type = AVMEDIA_TYPE_DATA;
+        st->codecpar->codec_type = AVMEDIA_TYPE_DATA;
+        //st->codec->codec_type = AVMEDIA_TYPE_DATA;
         sc->ffindex = st->index;
         fix_timescale(c, sc);
 
@@ -4783,11 +4784,15 @@ static int mov_read_traf(MOVContext *c, AVIOContext *pb, MOVAtom atom)
         sc->pb = c->fc->pb;
         sc->pb_is_copied = 1;
 
-        if (st->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+        if (st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+        //if (st->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
             if (!st->sample_aspect_ratio.num &&
-                (st->codec->width != sc->width || st->codec->height != sc->height)) {
-                st->sample_aspect_ratio = av_d2q(((double)st->codec->height * sc->width) /
-                                                 ((double)st->codec->width * sc->height), INT_MAX);
+                //(st->codec->width != sc->width || st->codec->height != sc->height)) {
+                //st->sample_aspect_ratio = av_d2q(((double)st->codec->height * sc->width) /
+                //                                 ((double)st->codec->width * sc->height), INT_MAX);
+                (st->codecpar->width != sc->width || st->codecpar->height != sc->height)) {  // Adjusted here
+                st->sample_aspect_ratio = av_d2q(((double)st->codecpar->height * sc->width) /  // Adjusted here
+                                                 ((double)st->codecpar->width * sc->height), INT_MAX);  // Adjusted here
             }
 
             if (st->duration > 0)
