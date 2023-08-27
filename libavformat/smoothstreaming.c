@@ -280,7 +280,8 @@ static int open_video_demuxer(StreamIndex *si, AVStream *st)
     int ret = 0;
 
     ist = si->ctx->streams[0]; /* only one stream by fragment */
-    avcodec_copy_context(st->codecpar, ist->codec);
+    //avcodec_copy_context(st->codecpar, ist->codec);
+    avcodec_parameters_to_context(st->codecpar, ist->codecpar);
     /* FIXME : the pts is not correct, video going to fast */
     avpriv_set_pts_info(st, ist->pts_wrap_bits, ist->time_base.num, ist->time_base.den);
 
