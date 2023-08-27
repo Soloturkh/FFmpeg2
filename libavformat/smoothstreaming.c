@@ -233,14 +233,15 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
         ret = ff_get_wav_header(st, bio, st->codecpar, len, 0);
         if (ret < 0)
             return ret;
-        st->need_parsing = AVSTREAM_PARSE_FULL_RAW;
+        ffstream(st)->need_parsing = AVSTREAM_PARSE_FULL_RAW;
         avpriv_set_pts_info(st, 64, 1, st->codecpar->sample_rate);
         av_free(buf);
 
     } else {
         ist = si->ctx->streams[0]; /* only one stream by fragment */
         avpriv_set_pts_info(st, ist->pts_wrap_bits, ist->time_base.num, ist->time_base.den);
-        avcodec_copy_context(st->codecpar, ist->codec);
+        //avcodec_copy_context(st->codecpar, ist->codec);
+	avcodec_parameters_to_context(st->codecpar, ist->codecpar);
         st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
         st->codecpar->codec_id = ff_codec_get_id(ff_codec_movaudio_tags, q->fourcc);
         if (q->fourcc == MKTAG('a', 'a', 'c', 'l'))
@@ -251,17 +252,20 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
         st->codecpar->sample_rate = qa->sample_rate;
         st->codecpar->bits_per_coded_sample = qa->bit_per_sample;
         st->codecpar->channels = qa->nb_channels;
-        if (qa->bit_per_sample == 16)
-            st->codecpar->sample_fmt = AV_SAMPLE_FMT_S16;
-        st->time_base.den = qa->sample_rate;
-        st->time_base.num = 1;
-        st->codecpar->time_base.den = st->time_base.den;
-        st->codecpar->time_base.num = st->time_base.num;
+        
+	if (qa->bit_per_sample == 16)
+        //    st->codec->sample_fmt = AV_SAMPLE_FMT_S16;
+              st->codecpar->bits_per_raw_sample = 16;
+	//st->time_base.den = qa->sample_rate;
+        st->codecpar->sample_rate = qa->sample_rate;
+	st->time_base.num = 1;
+        //st->codecpar->time_base.den = st->time_base.den; //iptal
+        //st->codecpar->time_base.num = st->time_base.num; //iptal
         st->codecpar->block_align = qa->packet_size;
 
-        if ((ret = smoothstreaming_set_extradata(st->codecpar, q->private_str)) < 0)
+        if ((ret = smoothstreaming_set_extradata(st->codec, q->private_str)) < 0)
             return ret;
-        st->codecpar->bit_rate = q->bit_rate;
+        st->codec->bit_rate = q->bit_rate;
     }
     si->parent->bit_rate += q->bit_rate;
 
