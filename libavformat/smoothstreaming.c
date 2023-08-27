@@ -121,8 +121,8 @@ static int read_data(void *opaque, uint8_t *buf, int buf_size)
             frag = &si->frags[si->cur_frag];
             make_frag_url(si, si->qualities[si->cur_quality].bit_rate, frag->start_ts, &url[0], sizeof(url));
             //ret = ffurl_open(&si->input, url, AVIO_FLAG_READ,
-            //                 &si->parent->interrupt_callback, &opts);
-            ret = avio_open2(&si->input, url, AVIO_FLAG_READ, 
+            //               &si->parent->interrupt_callback, &opts);
+			ret = avio_open2(&si->input, url, AVIO_FLAG_READ, 
                                &si->parent->interrupt_callback, &opts);
             av_dict_free(&opts);
             if (ret < 0)
@@ -144,7 +144,7 @@ static int read_data(void *opaque, uint8_t *buf, int buf_size)
     goto restart;
 }
 
-static int smoothstreaming_set_extradata(AVFormatContext *codecpar, const char *extra)
+static int smoothstreaming_set_extradata(AVCodecContext *codec, const char *extra)
 {
     int size = 0;
     uint8_t *buf = NULL;
@@ -153,16 +153,16 @@ static int smoothstreaming_set_extradata(AVFormatContext *codecpar, const char *
     new_size = strlen(extra) / 2;
     if (new_size >= INT_MAX)
         return AVERROR_INVALIDDATA;
-    buf = av_mallocz((new_size + AV_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
+    buf = av_mallocz((new_size + FF_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
     if (!buf)
         return AVERROR(ENOMEM);
     size = ff_hex_to_data(buf, extra);
-    codecpar->extradata_size = size;
-    codecpar->extradata = buf;
-    return codecpar->extradata_size;
+    codec->extradata_size = size;
+    codec->extradata = buf;
+    return codec->extradata_size;
 }
 
-static int smoothstreaming_set_extradata_h264(AVFormatContext *codecpar, const char *extra)
+static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char *extra)
 {
     int size = 0, ret = 0;
     int i, count;
@@ -173,12 +173,12 @@ static int smoothstreaming_set_extradata_h264(AVFormatContext *codecpar, const c
     new_size = strlen(extra) / 2;
     if (new_size >= INT_MAX)
         return AVERROR_INVALIDDATA;
-    buf = av_mallocz((new_size + AV_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
+    buf = av_mallocz((new_size + FF_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
     if (!buf)
         return AVERROR(ENOMEM);
     size = ff_hex_to_data(buf, extra);
-    codecpar->extradata_size = size;
-    codecpar->extradata = buf;
+    codec->extradata_size = size;
+    codec->extradata = buf;
 
     for (i = 0, count=0; i + 3 < size; ++i) {
         if (buf[i] == 0
@@ -191,19 +191,19 @@ static int smoothstreaming_set_extradata_h264(AVFormatContext *codecpar, const c
     }
 
     new_size = size + count * 4;
-    buf = av_mallocz((new_size + AV_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
+    buf = av_mallocz((new_size + FF_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
     if (!buf)
         return AVERROR(ENOMEM);
 
     bio = avio_alloc_context(buf, new_size, 0, NULL, NULL, NULL, NULL);
     if (!bio)
         return AVERROR(ENOMEM);
-    if ((ret = ff_isom_write_avcc(bio, codecpar->extradata, codecpar->extradata_size)) < 0)
+    if ((ret = ff_isom_write_avcc(bio, codec->extradata, codec->extradata_size)) < 0)
         return ret;
-    codecpar->extradata_size = bio->buf_ptr - bio->buffer;
-    codecpar->extradata = bio->buffer;
+    codec->extradata_size = bio->buf_ptr - bio->buffer;
+    codec->extradata = bio->buffer;
 
-    return codecpar->extradata_size;
+    return codec->extradata_size;
 }
 
 static int open_audio_demuxer(StreamIndex *si, AVStream *st)
@@ -221,7 +221,7 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
         len = strlen(q->private_str) / 2;
         if (len >= INT_MAX)
             return AVERROR_INVALIDDATA;
-        buf = av_mallocz((len + AV_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
+        buf = av_mallocz((len + FF_INPUT_BUFFER_PADDING_SIZE) * sizeof(*buf));
         if (!buf)
             return AVERROR(ENOMEM);
         len = ff_hex_to_data(buf, q->private_str);
@@ -232,34 +232,34 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
         if (ret < 0)
             return ret;
         st->need_parsing = AVSTREAM_PARSE_FULL_RAW;
-        avpriv_set_pts_info(st, 64, 1, st->codecpar->sample_rate);
+        avpriv_set_pts_info(st, 64, 1, st->codec->sample_rate);
         av_free(buf);
 
     } else {
         ist = si->ctx->streams[0]; /* only one stream by fragment */
         avpriv_set_pts_info(st, ist->pts_wrap_bits, ist->time_base.num, ist->time_base.den);
         avcodec_copy_context(st->codec, ist->codec);
-        st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
-        st->codecpar->codec_id = ff_codec_get_id(ff_codec_movaudio_tags, q->fourcc);
+        st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
+        st->codec->codec_id = ff_codec_get_id(ff_codec_movaudio_tags, q->fourcc);
         if (q->fourcc == MKTAG('a', 'a', 'c', 'l'))
-            st->codecpar->codec_id = AV_CODEC_ID_AAC;
+            st->codec->codec_id = AV_CODEC_ID_AAC;
         else if (q->fourcc == MKTAG('w', 'm', 'a', 'p'))
-            st->codecpar->codec_id = AV_CODEC_ID_WMAPRO;
+            st->codec->codec_id = AV_CODEC_ID_WMAPRO;
 
-        st->codecpar->sample_rate = qa->sample_rate;
-        st->codecpar->bits_per_coded_sample = qa->bit_per_sample;
-        st->codecpar->channels = qa->nb_channels;
+        st->codec->sample_rate = qa->sample_rate;
+        st->codec->bits_per_coded_sample = qa->bit_per_sample;
+        st->codec->channels = qa->nb_channels;
         if (qa->bit_per_sample == 16)
-            st->codecpar->sample_fmt = AV_SAMPLE_FMT_S16;
+            st->codec->sample_fmt = AV_SAMPLE_FMT_S16;
         st->time_base.den = qa->sample_rate;
         st->time_base.num = 1;
-        st->codecpar->time_base.den = st->time_base.den;
-        st->codecpar->time_base.num = st->time_base.num;
-        st->codecpar->block_align = qa->packet_size;
+        st->codec->time_base.den = st->time_base.den;
+        st->codec->time_base.num = st->time_base.num;
+        st->codec->block_align = qa->packet_size;
 
         if ((ret = smoothstreaming_set_extradata(st->codec, q->private_str)) < 0)
             return ret;
-        st->codecpar->bit_rate = q->bit_rate;
+        st->codec->bit_rate = q->bit_rate;
     }
     si->parent->bit_rate += q->bit_rate;
 
@@ -278,24 +278,24 @@ static int open_video_demuxer(StreamIndex *si, AVStream *st)
     /* FIXME : the pts is not correct, video going to fast */
     avpriv_set_pts_info(st, ist->pts_wrap_bits, ist->time_base.num, ist->time_base.den);
 
-    st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+    st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     if (q->fourcc == MKTAG('h', '2', '6', '4')
         || q->fourcc == MKTAG('a', 'v', 'c', '1')) {
-        st->codecpar->codec_id = AV_CODEC_ID_H264;
-        st->codecpar->pix_fmt = AV_PIX_FMT_YUV420P;
+        st->codec->codec_id = AV_CODEC_ID_H264;
+        st->codec->pix_fmt = AV_PIX_FMT_YUV420P;
         if ((ret = smoothstreaming_set_extradata_h264(st->codec, q->private_str)) < 0)
             return ret;
     }
     else if (q->fourcc == MKTAG('w', 'v', 'c', '1')) {
-        st->codecpar->codec_id = AV_CODEC_ID_VC1;
+        st->codec->codec_id = AV_CODEC_ID_VC1;
         if ((ret = smoothstreaming_set_extradata(st->codec, q->private_str)) < 0)
             return ret;
     }
 
-    st->codecpar->bit_rate = q->bit_rate;
-    st->codecpar->width = qv->width != -1 ? qv->width : qv->max_width;
-    st->codecpar->height = qv->height != -1 ? qv->height : qv->max_height;
-    st->codecpar->flags &= ~CODEC_FLAG_GLOBAL_HEADER;
+    st->codec->bit_rate = q->bit_rate;
+    st->codec->width = qv->width != -1 ? qv->width : qv->max_width;
+    st->codec->height = qv->height != -1 ? qv->height : qv->max_height;
+    st->codec->flags &= ~CODEC_FLAG_GLOBAL_HEADER;
 
     return 0;
 }
@@ -308,7 +308,7 @@ static int open_demux_codec(StreamIndex *si, AVStream *st)
     if (!q || !st)
         return AVERROR_INVALIDDATA;
 
-    st->codecpar->codec_tag = q->fourcc;
+    st->codec->codec_tag = q->fourcc;
     if (si->is_video != 0) {
         ret = open_video_demuxer(si, st);
     } else if (si->is_audio != 0) {
