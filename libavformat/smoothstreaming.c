@@ -157,9 +157,9 @@ static int smoothstreaming_set_extradata(AVCodecContext *codec, const char *extr
     if (!buf)
         return AVERROR(ENOMEM);
     size = ff_hex_to_data(buf, extra);
-    codec->extradata_size = size;
-    codec->extradata = buf;
-    return codec->extradata_size;
+    codecpar->extradata_size = size;
+    codecpar->extradata = buf;
+    return codecpar->extradata_size;
 }
 
 static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char *extra)
@@ -177,8 +177,8 @@ static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char 
     if (!buf)
         return AVERROR(ENOMEM);
     size = ff_hex_to_data(buf, extra);
-    codec->extradata_size = size;
-    codec->extradata = buf;
+    codecpar->extradata_size = size;
+    codecpar->extradata = buf;
 
     for (i = 0, count=0; i + 3 < size; ++i) {
         if (buf[i] == 0
@@ -198,12 +198,12 @@ static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char 
     bio = avio_alloc_context(buf, new_size, 0, NULL, NULL, NULL, NULL);
     if (!bio)
         return AVERROR(ENOMEM);
-    if ((ret = ff_isom_write_avcc(bio, codec->extradata, codec->extradata_size)) < 0)
+    if ((ret = ff_isom_write_avcc(bio, codecpar->extradata, codecpar->extradata_size)) < 0)
         return ret;
-    codec->extradata_size = bio->buf_ptr - bio->buffer;
-    codec->extradata = bio->buffer;
+    codecpar->extradata_size = bio->buf_ptr - bio->buffer;
+    codecpar->extradata = bio->buffer;
 
-    return codec->extradata_size;
+    return codecpar->extradata_size;
 }
 
 static int open_audio_demuxer(StreamIndex *si, AVStream *st)
@@ -232,34 +232,34 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
         if (ret < 0)
             return ret;
         st->need_parsing = AVSTREAM_PARSE_FULL_RAW;
-        avpriv_set_pts_info(st, 64, 1, st->codec->sample_rate);
+        avpriv_set_pts_info(st, 64, 1, st->codecpar->sample_rate);
         av_free(buf);
 
     } else {
         ist = si->ctx->streams[0]; /* only one stream by fragment */
         avpriv_set_pts_info(st, ist->pts_wrap_bits, ist->time_base.num, ist->time_base.den);
         avcodec_copy_context(st->codec, ist->codec);
-        st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
-        st->codec->codec_id = ff_codec_get_id(ff_codec_movaudio_tags, q->fourcc);
+        st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
+        st->codecpar->codec_id = ff_codec_get_id(ff_codec_movaudio_tags, q->fourcc);
         if (q->fourcc == MKTAG('a', 'a', 'c', 'l'))
-            st->codec->codec_id = AV_CODEC_ID_AAC;
+            st->codecpar->codec_id = AV_CODEC_ID_AAC;
         else if (q->fourcc == MKTAG('w', 'm', 'a', 'p'))
-            st->codec->codec_id = AV_CODEC_ID_WMAPRO;
+            st->codecpar->codec_id = AV_CODEC_ID_WMAPRO;
 
-        st->codec->sample_rate = qa->sample_rate;
-        st->codec->bits_per_coded_sample = qa->bit_per_sample;
-        st->codec->channels = qa->nb_channels;
+        st->codecpar->sample_rate = qa->sample_rate;
+        st->codecpar->bits_per_coded_sample = qa->bit_per_sample;
+        st->codecpar->channels = qa->nb_channels;
         if (qa->bit_per_sample == 16)
-            st->codec->sample_fmt = AV_SAMPLE_FMT_S16;
+            st->codecpar->sample_fmt = AV_SAMPLE_FMT_S16;
         st->time_base.den = qa->sample_rate;
         st->time_base.num = 1;
-        st->codec->time_base.den = st->time_base.den;
-        st->codec->time_base.num = st->time_base.num;
-        st->codec->block_align = qa->packet_size;
+        st->codecpar->time_base.den = st->time_base.den;
+        st->codecpar->time_base.num = st->time_base.num;
+        st->codecpar->block_align = qa->packet_size;
 
         if ((ret = smoothstreaming_set_extradata(st->codec, q->private_str)) < 0)
             return ret;
-        st->codec->bit_rate = q->bit_rate;
+        st->codecpar->bit_rate = q->bit_rate;
     }
     si->parent->bit_rate += q->bit_rate;
 
@@ -278,24 +278,24 @@ static int open_video_demuxer(StreamIndex *si, AVStream *st)
     /* FIXME : the pts is not correct, video going to fast */
     avpriv_set_pts_info(st, ist->pts_wrap_bits, ist->time_base.num, ist->time_base.den);
 
-    st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
+    st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
     if (q->fourcc == MKTAG('h', '2', '6', '4')
         || q->fourcc == MKTAG('a', 'v', 'c', '1')) {
-        st->codec->codec_id = AV_CODEC_ID_H264;
-        st->codec->pix_fmt = AV_PIX_FMT_YUV420P;
+        st->codecpar->codec_id = AV_CODEC_ID_H264;
+        st->codecpar->pix_fmt = AV_PIX_FMT_YUV420P;
         if ((ret = smoothstreaming_set_extradata_h264(st->codec, q->private_str)) < 0)
             return ret;
     }
     else if (q->fourcc == MKTAG('w', 'v', 'c', '1')) {
-        st->codec->codec_id = AV_CODEC_ID_VC1;
+        st->codecpar->codec_id = AV_CODEC_ID_VC1;
         if ((ret = smoothstreaming_set_extradata(st->codec, q->private_str)) < 0)
             return ret;
     }
 
-    st->codec->bit_rate = q->bit_rate;
-    st->codec->width = qv->width != -1 ? qv->width : qv->max_width;
-    st->codec->height = qv->height != -1 ? qv->height : qv->max_height;
-    st->codec->flags &= ~CODEC_FLAG_GLOBAL_HEADER;
+    st->codecpar->bit_rate = q->bit_rate;
+    st->codecpar->width = qv->width != -1 ? qv->width : qv->max_width;
+    st->codecpar->height = qv->height != -1 ? qv->height : qv->max_height;
+    st->codecpar->flags &= ~CODEC_FLAG_GLOBAL_HEADER;
 
     return 0;
 }
@@ -308,7 +308,7 @@ static int open_demux_codec(StreamIndex *si, AVStream *st)
     if (!q || !st)
         return AVERROR_INVALIDDATA;
 
-    st->codec->codec_tag = q->fourcc;
+    st->codecpar->codec_tag = q->fourcc;
     if (si->is_video != 0) {
         ret = open_video_demuxer(si, st);
     } else if (si->is_audio != 0) {
