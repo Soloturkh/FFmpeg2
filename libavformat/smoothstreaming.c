@@ -145,7 +145,7 @@ static int read_data(void *opaque, uint8_t *buf, int buf_size)
     goto restart;
 }
 
-static int smoothstreaming_set_extradata(AVCodecContext *codec, const char *extra)
+static int smoothstreaming_set_extradata(AVCodecParameters *codecpar, const char *extra)
 {
     int size = 0;
     uint8_t *buf = NULL;
@@ -158,12 +158,12 @@ static int smoothstreaming_set_extradata(AVCodecContext *codec, const char *extr
     if (!buf)
         return AVERROR(ENOMEM);
     size = ff_hex_to_data(buf, extra);
-    codec->extradata_size = size;
-    codec->extradata = buf;
-    return codec->extradata_size;
+    codecpar->extradata_size = size;
+    codecpar->extradata = buf;
+    return codecpar->extradata_size;
 }
 
-static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char *extra)
+static int smoothstreaming_set_extradata_h264(AVCodecParameters *codecpar, const char *extra)
 {
     int size = 0, ret = 0;
     int i, count;
@@ -178,8 +178,8 @@ static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char 
     if (!buf)
         return AVERROR(ENOMEM);
     size = ff_hex_to_data(buf, extra);
-    codec->extradata_size = size;
-    codec->extradata = buf;
+    codecpar->extradata_size = size;
+    codecpar->extradata = buf;
 
     for (i = 0, count=0; i + 3 < size; ++i) {
         if (buf[i] == 0
@@ -199,12 +199,12 @@ static int smoothstreaming_set_extradata_h264(AVCodecContext *codec, const char 
     bio = avio_alloc_context(buf, new_size, 0, NULL, NULL, NULL, NULL);
     if (!bio)
         return AVERROR(ENOMEM);
-    if ((ret = ff_isom_write_avcc(bio, codec->extradata, codec->extradata_size)) < 0)
+    if ((ret = ff_isom_write_avcc(bio, codecpar->extradata, codecpar->extradata_size)) < 0)
         return ret;
-    codec->extradata_size = bio->buf_ptr - bio->buffer;
-    codec->extradata = bio->buffer;
+    codecpar->extradata_size = bio->buf_ptr - bio->buffer;
+    codecpar->extradata = bio->buffer;
 
-    return codec->extradata_size;
+    return codecpar->extradata_size;
 }
 
 static int open_audio_demuxer(StreamIndex *si, AVStream *st)
