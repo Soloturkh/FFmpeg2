@@ -725,9 +725,9 @@ static int smoothstreaming_read_probe(AVProbeData *pd)
 {
     int ret = 0;
 
-    if (pd->filename && !strcasecmp(pd->filename + strlen(pd->filename) - 9, "/manifest"))
+    if (pd->filename && !av_strcasecmp(pd->filename + strlen(pd->filename) - 9, "/manifest"))
         ret += AVPROBE_SCORE_MAX / 2;
-    if (pd->buf && pd->buf_size > 19 && !strncasecmp(pd->buf, "<?xml version=\"1.0\"", 19))
+    if (pd->buf && pd->buf_size > 19 && !av_strncasecmp(pd->buf, "<?xml version=\"1.0\"", 19))
         ret += AVPROBE_SCORE_MAX / 4;
     /* TODO: check for SmoothStreamingMedia */
     return ret;
