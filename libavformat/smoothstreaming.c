@@ -263,9 +263,9 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
         //st->codecpar->time_base.num = st->time_base.num; //iptal
         st->codecpar->block_align = qa->packet_size;
 
-        if ((ret = smoothstreaming_set_extradata(st->codec, q->private_str)) < 0)
+        if ((ret = smoothstreaming_set_extradata(st->codecpar, q->private_str)) < 0)
             return ret;
-        st->codec->bit_rate = q->bit_rate;
+        st->codecpar->bit_rate = q->bit_rate;
     }
     si->parent->bit_rate += q->bit_rate;
 
@@ -289,7 +289,8 @@ static int open_video_demuxer(StreamIndex *si, AVStream *st)
     if (q->fourcc == MKTAG('h', '2', '6', '4')
         || q->fourcc == MKTAG('a', 'v', 'c', '1')) {
         st->codecpar->codec_id = AV_CODEC_ID_H264;
-        st->codecpar->pix_fmt = AV_PIX_FMT_YUV420P;
+        //st->codecpar->pix_fmt = AV_PIX_FMT_YUV420P;
+	st->codecpar->format = AV_PIX_FMT_YUV420P;
         if ((ret = smoothstreaming_set_extradata_h264(st->codecpar, q->private_str)) < 0)
             return ret;
     }
@@ -302,7 +303,7 @@ static int open_video_demuxer(StreamIndex *si, AVStream *st)
     st->codecpar->bit_rate = q->bit_rate;
     st->codecpar->width = qv->width != -1 ? qv->width : qv->max_width;
     st->codecpar->height = qv->height != -1 ? qv->height : qv->max_height;
-    st->codecpar->flags &= ~CODEC_FLAG_GLOBAL_HEADER;
+    st->codecpar->flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
 
     return 0;
 }
@@ -445,9 +446,28 @@ static int smoothstreaming_read_header(AVFormatContext *s)
     int ret = 0;
 
     /* Manifest is already here; copy the url to reach */
-    snprintf(c->url, sizeof(c->url), "%s", s->filename);
+    //snprintf(c->url, sizeof(c->url), "%s", s->filename);
+    av_strlcpy(c->url, s->url, sizeof(c->url));
 
+   
     c->interrupt_callback = &s->interrupt_callback;
+
+    //defans
+    //char *location = NULL;
+    //if (av_opt_get(s->pb, "location", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&location) < 0) {
+    //    av_log(s, AV_LOG_WARNING, "Failed to get location from AVIOContext.\n");
+    //} else {
+    //    // location başarılı bir şekilde alındıysa ve s->url zaten location ile aynı değilse, s->url güncellenir.
+    //    if (!s->url || strcmp(s->url, location) != 0) {
+    //        av_freep(&s->url); // mevcut s->url'nin hafızasını serbest bırak
+    //        s->url = location; // s->url'yi yeni location ile güncelle
+    //        av_log(s, AV_LOG_INFO, "URL updated to: %s\n", s->url);
+    //    } else {
+    //        // Eğer s->url zaten location ile aynıysa, location'ın hafızasını serbest bırak
+    //        av_freep(&location);
+    //    }
+    //}
+    //defans
 
     if ((ret = smoothstreaming_parse_manifest(s, c->url, s->pb)) < 0)
         goto fail;
@@ -538,7 +558,8 @@ static int treat_packet(MSSContext *c, AVPacket *pkt, StreamIndex *si, int *minv
             ret = av_read_frame(si->ctx, &si->pkt);
 
             if (ret < 0) {
-                if (!url_feof(&si->pb) && ret != AVERROR_EOF)
+                //if (!url_feof(&si->pb) && ret != AVERROR_EOF)
+		if (!avio_feof(&si->pb) && ret != AVERROR_EOF)
                     return ret;
                 av_init_packet(&si->pkt);
                 si->pkt.data = NULL;
@@ -643,7 +664,8 @@ static int find_fragments_ts(AVFormatContext *s, StreamIndex *si, int stream_ind
         ffurl_close(si->input);
         si->input = NULL;
     }
-    av_free_packet(&si->pkt);
+    //av_free_packet(&si->pkt);
+    av_packet_unref(&si->pkt);
     av_init_packet(&si->pkt);
     si->pkt.data = NULL;
     si->pb.eof_reached = 0;
