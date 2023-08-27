@@ -6476,9 +6476,9 @@ check_func_headers VideoToolbox/VideoToolbox.h VTPixelRotationSessionCreate -fra
 check_headers windows.h
 check_headers asm/types.h
 
-#disabled libexpat || check_lib expat.h  XML_ExpatVersion -lexpat || disable libexpat
-#disabled  zlib    || check_lib   zlib.h      zlibVersion -lz     || disable  zlib
-#disabled bzlib    || check_lib2 bzlib.h BZ2_bzlibVersion -lbz2   || disable bzlib
+disabled libexpat || check_lib expat.h  XML_ExpatVersion -lexpat || disable libexpat
+disabled  zlib    || check_lib   zlib.h      zlibVersion -lz     || disable  zlib
+disabled bzlib    || check_lib2 bzlib.h BZ2_bzlibVersion -lbz2   || disable bzlib
 
 # it seems there are versions of clang in some distros that try to use the
 # gcc headers, which explodes for stdatomic
