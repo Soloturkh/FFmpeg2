@@ -23,6 +23,7 @@
  * Used the hls demuxer as example. (libavformat/hls.c)
  * And piff specification
  * (http://www.iis.net/learn/media/smooth-streaming/protected-interoperable-file-format)
+ * BUILD
  */
 #include "libavutil/dict.h"
 
