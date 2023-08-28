@@ -26,7 +26,7 @@
  * BUILD
  */
 #include "libavutil/dict.h"
-#include "libavutil/samplefmt.h"
+//#include "libavutil/samplefmt.h"
 #include "libavutil/avstring.h"
 #include "libavutil/time.h"
 #include "libavcodec/avcodec.h"
