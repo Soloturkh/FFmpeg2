@@ -26,7 +26,6 @@
 #include "url.h"
 #include "smoothstreaming.h"
 
-#include <expat.h>
 #include <ctype.h>
 
 static void print_context(AVFormatContext *s)
