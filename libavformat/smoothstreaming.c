@@ -272,10 +272,9 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
     return 0;
 }
 
-static int open_video_demuxer(StreamIndex *si, AVStream *st, AVCodecContext *avctx)
+static int open_video_demuxer(StreamIndex *si, AVStream *st)
 {
     Quality *q = &si->qualities[si->cur_quality];
-    MSSContext *c = avctx->priv_data;
     QualityVideo *qv = q->qv;
     AVStream *ist = NULL;
     int ret = 0;
@@ -305,7 +304,15 @@ static int open_video_demuxer(StreamIndex *si, AVStream *st, AVCodecContext *avc
     st->codecpar->width = qv->width != -1 ? qv->width : qv->max_width;
     st->codecpar->height = qv->height != -1 ? qv->height : qv->max_height;
     //st->codecpar->flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
-    avctx->flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
+    // AVCodecContext için flags değerini değiştirme
+    AVCodecContext *codec_ctx = avcodec_alloc_context3(NULL);
+    if (!codec_ctx) {
+        av_log(NULL, AV_LOG_ERROR, "Could not allocate codec context\n");
+        return AVERROR(ENOMEM);
+    }
+    avcodec_parameters_to_context(codec_ctx, st->codecpar);
+    codec_ctx->flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
+    avcodec_free_context(&codec_ctx);
 
     return 0;
 }
