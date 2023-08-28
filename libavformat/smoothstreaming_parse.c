@@ -114,23 +114,23 @@ static int parse_media(AVFormatContext *s, const char **attribute)
                 c->duration = 0;
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "MajorVersion")) {
+        } else if (!av_strcasecmp(attribute[i], "MajorVersion")) {
             c->major = strtol(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 c->major = -1;
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "MinorVersion")) {
+        } else if (!av_strcasecmp(attribute[i], "MinorVersion")) {
             c->minor = strtol(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 c->minor = -1;
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "TimeScale")) {
+        } else if (!av_strcasecmp(attribute[i], "TimeScale")) {
             /* TODO */
-        } else if (!strcasecmp(attribute[i], "LookAheadCount")) {
+        } else if (!av_strcasecmp(attribute[i], "LookAheadCount")) {
             /* TODO */
-        } else if (!strcasecmp(attribute[i], "DVRWindowLength")) {
+        } else if (!av_strcasecmp(attribute[i], "DVRWindowLength")) {
             /* TODO */
         } else {
             av_log(s, AV_LOG_ERROR, "Manifest : SmoothStreamingMedia: field %s"
@@ -198,61 +198,61 @@ static int parse_index(AVFormatContext *s, const char **attribute)
     si->pkt.data = NULL;
 
     for (i = 0; attribute[i] && attribute[i + 1]; i += 2) {
-        if (!strcasecmp(attribute[i], "Type")) {
-            if (strcasecmp(attribute[i + 1], "video") == 0)
+        if (!av_strcasecmp(attribute[i], "Type")) {
+            if (av_strcasecmp(attribute[i + 1], "video") == 0)
                 si->is_video = 1;
-            else if (strcasecmp(attribute[i + 1], "audio") == 0)
+            else if (av_strcasecmp(attribute[i + 1], "audio") == 0)
                 si->is_audio = 1;
-            else if (strcasecmp(attribute[i + 1], "text") == 0)
+            else if (av_strcasecmp(attribute[i + 1], "text") == 0)
                 si->is_text = 1; /* TODO: subtitles */
             else
                 return AVERROR_INVALIDDATA;
-        } else if (!strcasecmp(attribute[i], "QualityLevels")) {
+        } else if (!av_strcasecmp(attribute[i], "QualityLevels")) {
             /* Some server use this value for fun and make a segmentation fault */
             /* si->nb_qualities = strtoll(attribute[i + 1], &tmp, 10); */
             /* if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') */
             /*     { */
             /*         return AVERROR_INVALIDDATA; */
             /*     } */
-        } else if (!strcasecmp(attribute[i], "Chunks")) {
+        } else if (!av_strcasecmp(attribute[i], "Chunks")) {
             si->nb_fragments = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "Index")) {
+        } else if (!av_strcasecmp(attribute[i], "Index")) {
             si->index = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "MaxWidth")) {
+        } else if (!av_strcasecmp(attribute[i], "MaxWidth")) {
             si->max_width = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "MaxHeight")) {
+        } else if (!av_strcasecmp(attribute[i], "MaxHeight")) {
             si->max_height = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "DisplayWidth")) {
+        } else if (!av_strcasecmp(attribute[i], "DisplayWidth")) {
             si->display_width = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "DisplayHeight")) {
+        } else if (!av_strcasecmp(attribute[i], "DisplayHeight")) {
             si->display_height = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 return AVERROR_INVALIDDATA;
             }
-        } else if (!strcasecmp(attribute[i], "Url")) {
+        } else if (!av_strcasecmp(attribute[i], "Url")) {
             url = attribute[i + 1];
-        } else if (!strcasecmp(attribute[i], "Subtype")) {
+        } else if (!av_strcasecmp(attribute[i], "Subtype")) {
             av_log(s, AV_LOG_INFO, "Subtype : %s\n", attribute[i + 1]);
-        } else if (!strcasecmp(attribute[i], "SubtypeEventControl")) {
+        } else if (!av_strcasecmp(attribute[i], "SubtypeEventControl")) {
             av_log(s, AV_LOG_INFO, "SubtypeEventControl : %s\n", attribute[i + 1]);
-        } else if (!strcasecmp(attribute[i], "ParentStream")) {
+        } else if (!av_strcasecmp(attribute[i], "ParentStream")) {
             av_log(s, AV_LOG_INFO, "ParentStream : %s\n", attribute[i + 1]);
-        } else if (!strcasecmp(attribute[i], "Name")) {
+        } else if (!av_strcasecmp(attribute[i], "Name")) {
             av_log(s, AV_LOG_INFO, "name : %s\n", attribute[i + 1]);
         } else {
             av_log(s, AV_LOG_WARNING, "Manifest : StreamIndex : option %s is not recognized\n", attribute[i]);
@@ -323,7 +323,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
 
     for (i = 0; attribute[i] && attribute[i + 1]; i += 2)
     {
-        if (strcasecmp(attribute[i], "Index") == 0)
+        if (av_strcasecmp(attribute[i], "Index") == 0)
         {
             index = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -331,7 +331,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "Bitrate") == 0)
+        else if (av_strcasecmp(attribute[i], "Bitrate") == 0)
         {
             bit_rate = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -339,7 +339,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "MaxWidth") == 0)
+        else if (av_strcasecmp(attribute[i], "MaxWidth") == 0)
         {
             max_width = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -347,7 +347,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "MaxHeight") == 0)
+        else if (av_strcasecmp(attribute[i], "MaxHeight") == 0)
         {
             max_height = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -355,7 +355,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "Width") == 0)
+        else if (av_strcasecmp(attribute[i], "Width") == 0)
         {
             width = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -363,7 +363,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "Height") == 0)
+        else if (av_strcasecmp(attribute[i], "Height") == 0)
         {
             height = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -371,7 +371,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "AudioTag") == 0)
+        else if (av_strcasecmp(attribute[i], "AudioTag") == 0)
         {
             audio_tag = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -379,7 +379,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "BitsPerSample") == 0)
+        else if (av_strcasecmp(attribute[i], "BitsPerSample") == 0)
         {
             b_p_sample = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -387,7 +387,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "SamplingRate") == 0)
+        else if (av_strcasecmp(attribute[i], "SamplingRate") == 0)
         {
             sample_rate = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -395,7 +395,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "PacketSize") == 0)
+        else if (av_strcasecmp(attribute[i], "PacketSize") == 0)
         {
             packet_size = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -403,7 +403,7 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "Channels") == 0)
+        else if (av_strcasecmp(attribute[i], "Channels") == 0)
         {
             channels = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -411,15 +411,15 @@ static int parse_quality(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "FourCC") == 0)
+        else if (av_strcasecmp(attribute[i], "FourCC") == 0)
         {
             fourcc = attribute[i + 1];
         }
-        else if (strcasecmp(attribute[i], "CodecPrivateData") == 0)
+        else if (av_strcasecmp(attribute[i], "CodecPrivateData") == 0)
         {
             private_data = attribute[i + 1];
         }
-        else if (strcasecmp(attribute[i], "WaveFormatEx") == 0)
+        else if (av_strcasecmp(attribute[i], "WaveFormatEx") == 0)
         {
             fourcc = "WMAP";
             private_data = attribute[i + 1];
@@ -506,7 +506,7 @@ static int parse_frags(AVFormatContext *s, const char **attribute)
             /* for (j = 0; j < f->index - 1; ++j) */
             /*     start_ts += si->frags[j].duration; */
         }
-        else if (strcasecmp(attribute[i], "d") == 0)
+        else if (av_strcasecmp(attribute[i], "d") == 0)
         {
             f->duration = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -514,7 +514,7 @@ static int parse_frags(AVFormatContext *s, const char **attribute)
                 return AVERROR_INVALIDDATA;
             }
         }
-        else if (strcasecmp(attribute[i], "t") == 0)
+        else if (av_strcasecmp(attribute[i], "t") == 0)
         {
             f->start_ts = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0')
@@ -549,25 +549,25 @@ static void start_element(void *data, const char *element, const char **attribut
     MSSContext *c = s->priv_data;
     int error = 0;
 
-    if (strcasecmp(element, "SmoothStreamingMedia") == 0)
+    if (av_strcasecmp(element, "SmoothStreamingMedia") == 0)
     {
         if ((error = parse_media(s, attribute)) < 0)
             goto fail;
     }
 
-    else if (strcasecmp(element, "StreamIndex") == 0)
+    else if (av_strcasecmp(element, "StreamIndex") == 0)
     {
         if ((error = parse_index(s, attribute)) < 0)
             goto fail;
     }
 
-    else if (strcasecmp(element, "QualityLevel") == 0)
+    else if (av_strcasecmp(element, "QualityLevel") == 0)
     {
         if ((error = parse_quality(s, attribute)) < 0)
             goto fail;
     }
 
-    else if (strcasecmp(element, "c") == 0)
+    else if (av_strcasecmp(element, "c") == 0)
     {
         if ((error = parse_frags(s, attribute)) < 0)
             goto fail;
