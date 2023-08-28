@@ -391,7 +391,7 @@ static int open_demuxer(AVFormatContext *s, StreamIndex *si)
     if ((ret = open_demuxer_io(si)) < 0)
         return ret;
 
-    si->ctx->ctx_flags &= ~CODEC_FLAG_GLOBAL_HEADER;
+    si->ctx->ctx_flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
     if ((ret = avformat_find_stream_info(si->ctx, NULL)) < 0)
         return ret;
 
