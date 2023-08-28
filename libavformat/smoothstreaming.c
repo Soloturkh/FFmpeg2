@@ -303,7 +303,8 @@ static int open_video_demuxer(StreamIndex *si, AVStream *st)
     st->codecpar->bit_rate = q->bit_rate;
     st->codecpar->width = qv->width != -1 ? qv->width : qv->max_width;
     st->codecpar->height = qv->height != -1 ? qv->height : qv->max_height;
-    st->codecpar->flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
+    //st->codecpar->flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
+    st->codecpar->extradata &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
 
     return 0;
 }
