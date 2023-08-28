@@ -26,7 +26,7 @@
  * BUILD
  */
 #include "libavutil/dict.h"
-
+#include "libavutil/samplefmt.h"
 #include "libavutil/avstring.h"
 #include "libavutil/time.h"
 #include "libavcodec/avcodec.h"
@@ -272,9 +272,10 @@ static int open_audio_demuxer(StreamIndex *si, AVStream *st)
     return 0;
 }
 
-static int open_video_demuxer(StreamIndex *si, AVStream *st)
+static int open_video_demuxer(StreamIndex *si, AVStream *st, AVCodecContext *avctx)
 {
     Quality *q = &si->qualities[si->cur_quality];
+    MSSContext *c = avctx->priv_data;
     QualityVideo *qv = q->qv;
     AVStream *ist = NULL;
     int ret = 0;
@@ -304,7 +305,7 @@ static int open_video_demuxer(StreamIndex *si, AVStream *st)
     st->codecpar->width = qv->width != -1 ? qv->width : qv->max_width;
     st->codecpar->height = qv->height != -1 ? qv->height : qv->max_height;
     //st->codecpar->flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
-    st->codecpar->extradata &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
+    avctx->flags &= ~AV_CODEC_FLAG_GLOBAL_HEADER;
 
     return 0;
 }
