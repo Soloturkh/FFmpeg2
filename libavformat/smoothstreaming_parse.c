@@ -20,6 +20,7 @@
  */
 
 #include "libavutil/time.h"
+#include "libavformat/expat.h"
 
 #include "avformat.h"
 #include "url.h"
