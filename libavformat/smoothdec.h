@@ -34,6 +34,6 @@ typedef enum {
 } SMOOTHTmplId;
 
 
-void ff_SMOOTH_fill_tmpl_params(char *dst, size_t buffer_size, const char *template, int rep_id, int number, int bit_rate, int64_t time);
+void ff_smooth_fill_tmpl_params(char *dst, size_t buffer_size, const char *template, int rep_id, int number, int bit_rate, int64_t time);
 
 #endif /* AVFORMAT_SMOOTH_H */
