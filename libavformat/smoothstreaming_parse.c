@@ -599,7 +599,8 @@ int smoothstreaming_parse_manifest(AVFormatContext *s, const char *url, AVIOCont
     int len = 0;
     XML_Parser      parser;
 
-    while (!url_feof(in))
+    while (!avio_feof(in))
+    //while (!url_feof(in))
     {
         line = av_realloc(line, pos + SMOOTH_BUFF_SIZE);
         if (!line)
