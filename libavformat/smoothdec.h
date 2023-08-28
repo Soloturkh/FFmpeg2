@@ -1,5 +1,5 @@
 /*
- * SMOOTH SMOOTH STREAMING MPEG segmenter
+ * SMOOTH STREAMING MPEG segmenter
  * Copyright (c) 2023 Defans System
  *
  * This file is part of FFmpeg.
