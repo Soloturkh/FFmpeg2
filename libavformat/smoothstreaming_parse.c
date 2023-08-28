@@ -18,7 +18,7 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-
+#include "libavutil/avstring.h"
 #include "libavutil/time.h"
 #include "expat.h"
 
@@ -107,7 +107,8 @@ static int parse_media(AVFormatContext *s, const char **attribute)
         if (strcmp(attribute[i], "isLive") == 0
             && strcmp(attribute[i + 1], "true") == 0)
             c->is_live = 1;
-        else if (strcasecmp(attribute[i], "Duration") == 0) {
+        //else if (strcasecmp(attribute[i], "Duration") == 0) {
+        else if (av_stristr(attribute[i], "Duration") == 0) {
             c->duration = strtoll(attribute[i + 1], &tmp, 10);
             if (!tmp || tmp == attribute[i + 1] || *tmp != '\0') {
                 c->duration = 0;
@@ -151,7 +152,8 @@ static int make_stream_url(AVFormatContext *s, StreamIndex* si, const char *url)
     uint64_t diff;
     int len;
 
-    find_pos = strcasestr(c->url, "/manifest");
+    //find_pos = strcasestr(c->url, "/manifest");
+    find_pos = av_stristr(c->url, "/manifest");
     if (!find_pos)
         diff = strlen(c->url);
     else
