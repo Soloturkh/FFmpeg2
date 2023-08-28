@@ -1,5 +1,5 @@
 /*
- * DEFANS SMOOTH STREAMING MPEG segmenter
+ * SMOOTH SMOOTH STREAMING MPEG segmenter
  * Copyright (c) 2014 Martin Storsjo
  *
  * This file is part of FFmpeg.
@@ -19,21 +19,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVFORMAT_DEFANS_H
-#define AVFORMAT_DEFANS_H
+#ifndef AVFORMAT_SMOOTH_H
+#define AVFORMAT_SMOOTH_H
 #include "avformat.h"
 
 // See ISO/IEC 23009-1:2014 5.3.9.4.4
 typedef enum {
-    DEFANS_TMPL_ID_UNDEFINED = -1,
-    DEFANS_TMPL_ID_ESCAPE,
-    DEFANS_TMPL_ID_REP_ID,
-    DEFANS_TMPL_ID_NUMBER,
-    DEFANS_TMPL_ID_BANDWIDTH,
-    DEFANS_TMPL_ID_TIME,
-} DEFANSTmplId;
+    SMOOTH_TMPL_ID_UNDEFINED = -1,
+    SMOOTH_TMPL_ID_ESCAPE,
+    SMOOTH_TMPL_ID_REP_ID,
+    SMOOTH_TMPL_ID_NUMBER,
+    SMOOTH_TMPL_ID_BANDWIDTH,
+    SMOOTH_TMPL_ID_TIME,
+} SMOOTHTmplId;
 
 
-void ff_defans_fill_tmpl_params(char *dst, size_t buffer_size, const char *template, int rep_id, int number, int bit_rate, int64_t time);
+void ff_SMOOTH_fill_tmpl_params(char *dst, size_t buffer_size, const char *template, int rep_id, int number, int bit_rate, int64_t time);
 
-#endif /* AVFORMAT_DEFANS_H */
+#endif /* AVFORMAT_SMOOTH_H */
