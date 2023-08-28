@@ -31,6 +31,12 @@
 #include "libavutil/time.h"
 #include "libavcodec/avcodec.h"
 
+#include <libxml/parser.h>
+#include "libavutil/bprint.h"
+#include "libavutil/opt.h"
+#include "libavutil/parseutils.h"
+
+#include "demux.h"
 #include "avformat.h"
 #include "internal.h"
 #include "avio_internal.h"
