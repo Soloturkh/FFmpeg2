@@ -22,6 +22,7 @@
 #ifndef AVFORMAT_SMOOTH_H
 #define AVFORMAT_SMOOTH_H
 #include "avformat.h"
+#include "isom.h"
 
 // See ISO/IEC 23009-1:2014 5.3.9.4.4
 typedef enum {
