@@ -27,6 +27,7 @@
 #include "internal.h"
 #include "avio_internal.h"
 #include "dash.h"
+#include "isom.h"
 #include "demux.h"
 
 #define INITIAL_BUFFER_SIZE 32768
