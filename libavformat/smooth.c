@@ -40,34 +40,34 @@
 #include "url.h"
 #include "dash.h"
 
-static DASHTmplId dash_read_tmpl_id(const char *identifier, char *format_tag,
+static SMOOTHTmplId dash_read_tmpl_id(const char *identifier, char *format_tag,
                                     size_t format_tag_size, const char **ptr) {
     const char *next_ptr;
-    DASHTmplId id_type = DASH_TMPL_ID_UNDEFINED;
+    SMOOTHTmplId id_type = SMOOTH_TMPL_ID_UNDEFINED;
 
     if (av_strstart(identifier, "$$", &next_ptr)) {
-        id_type = DASH_TMPL_ID_ESCAPE;
+        id_type = SMOOTH_TMPL_ID_ESCAPE;
         *ptr = next_ptr;
     } else if (av_strstart(identifier, "$RepresentationID$", &next_ptr)) {
-        id_type = DASH_TMPL_ID_REP_ID;
+        id_type = SMOOTH_TMPL_ID_REP_ID;
         // default to basic format, as $RepresentationID$ identifiers
         // are not allowed to have custom format-tags.
         av_strlcpy(format_tag, "%d", format_tag_size);
         *ptr = next_ptr;
     } else { // the following identifiers may have an explicit format_tag
         if (av_strstart(identifier, "$Number", &next_ptr))
-            id_type = DASH_TMPL_ID_NUMBER;
+            id_type = SMOOTH_TMPL_ID_NUMBER;
         else if (av_strstart(identifier, "$Bandwidth", &next_ptr))
-            id_type = DASH_TMPL_ID_BANDWIDTH;
+            id_type = SMOOTH_TMPL_ID_BANDWIDTH;
         else if (av_strstart(identifier, "$Time", &next_ptr))
-            id_type = DASH_TMPL_ID_TIME;
+            id_type = SMOOTH_TMPL_ID_TIME;
         else
-            id_type = DASH_TMPL_ID_UNDEFINED;
+            id_type = SMOOTH_TMPL_ID_UNDEFINED;
 
         // next parse the dash format-tag and generate a c-string format tag
         // (next_ptr now points at the first '%' at the beginning of the format-tag)
-        if (id_type != DASH_TMPL_ID_UNDEFINED) {
-            const char *number_format = (id_type == DASH_TMPL_ID_TIME) ? PRId64 : "d";
+        if (id_type != SMOOTH_TMPL_ID_UNDEFINED) {
+            const char *number_format = (id_type == SMOOTH_TMPL_ID_TIME) ? PRId64 : "d";
             if (next_ptr[0] == '$') { // no dash format-tag
                 snprintf(format_tag, format_tag_size, "%%%s", number_format);
                 *ptr = &next_ptr[1];
@@ -84,7 +84,7 @@ static DASHTmplId dash_read_tmpl_id(const char *identifier, char *format_tag,
                     av_log(NULL, AV_LOG_WARNING, "Failed to parse format-tag beginning with %s. Expected either a "
                                                  "closing '$' character or a format-string like '%%0[width]d', "
                                                  "where width must be a single digit\n", next_ptr);
-                    id_type = DASH_TMPL_ID_UNDEFINED;
+                    id_type = SMOOTH_TMPL_ID_UNDEFINED;
                 }
             }
         }
@@ -92,7 +92,7 @@ static DASHTmplId dash_read_tmpl_id(const char *identifier, char *format_tag,
     return id_type;
 }
 
-void ff_dash_fill_tmpl_params(char *dst, size_t buffer_size,
+void ff_smooth_fill_tmpl_params(char *dst, size_t buffer_size,
                                   const char *template, int rep_id,
                                   int number, int bit_rate,
                                   int64_t time) {
@@ -101,7 +101,7 @@ void ff_dash_fill_tmpl_params(char *dst, size_t buffer_size,
     while (dst_pos < buffer_size - 1 && *t_cur) {
         char format_tag[7]; // May be "%d", "%0Xd", or "%0Xlld" (for $Time$), where X is in [0-9]
         int n = 0;
-        DASHTmplId id_type;
+        SMOOTHTmplId id_type;
         const char *t_next = strchr(t_cur, '$'); // copy over everything up to the first '$' character
         if (t_next) {
             int num_copy_bytes = FFMIN(t_next - t_cur, buffer_size - dst_pos - 1);
@@ -120,23 +120,23 @@ void ff_dash_fill_tmpl_params(char *dst, size_t buffer_size,
         // t_cur is now pointing to a '$' character
         id_type = dash_read_tmpl_id(t_cur, format_tag, sizeof(format_tag), &t_next);
         switch (id_type) {
-        case DASH_TMPL_ID_ESCAPE:
+        case SMOOTH_TMPL_ID_ESCAPE:
             av_strlcpy(&dst[dst_pos], "$", 2);
             n = 1;
             break;
-        case DASH_TMPL_ID_REP_ID:
+        case SMOOTH_TMPL_ID_REP_ID:
             n = snprintf(&dst[dst_pos], buffer_size - dst_pos, format_tag, rep_id);
             break;
-        case DASH_TMPL_ID_NUMBER:
+        case SMOOTH_TMPL_ID_NUMBER:
             n = snprintf(&dst[dst_pos], buffer_size - dst_pos, format_tag, number);
             break;
-        case DASH_TMPL_ID_BANDWIDTH:
+        case SMOOTH_TMPL_ID_BANDWIDTH:
             n = snprintf(&dst[dst_pos], buffer_size - dst_pos, format_tag, bit_rate);
             break;
-        case DASH_TMPL_ID_TIME:
+        case SMOOTH_TMPL_ID_TIME:
             n = snprintf(&dst[dst_pos], buffer_size - dst_pos, format_tag, time);
             break;
-        case DASH_TMPL_ID_UNDEFINED:
+        case SMOOTH_TMPL_ID_UNDEFINED:
             // copy over one byte and advance
             av_strlcpy(&dst[dst_pos], t_cur, 2);
             n = 1;
