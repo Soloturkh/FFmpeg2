@@ -26,7 +26,7 @@
 #include "libavutil/parseutils.h"
 #include "internal.h"
 #include "avio_internal.h"
-#include "dash.h"
+#include "smooth.h"
 #include "isom.h"
 #include "demux.h"
 
@@ -39,7 +39,7 @@ struct fragment {
 };
 
 /*
- * reference to : ISO_IEC_23009-1-DASH-2012
+ * reference to : ISO_IEC_23009-1-smooth-2012
  * Section: 5.3.9.6.2
  * Table: Table 17 — Semantics of SegmentTimeline element
  * */
@@ -118,7 +118,7 @@ struct representation {
     int is_restart_needed;
 };
 
-typedef struct DASHContext {
+typedef struct smoothContext {
     const AVClass *class;
     char *base_url;
 
@@ -158,7 +158,7 @@ typedef struct DASHContext {
     int is_init_section_common_audio;
     int is_init_section_common_subtitle;
 
-} DASHContext;
+} smoothContext;
 
 static int ishttp(char *url)
 {
@@ -366,7 +366,7 @@ static void free_representation(struct representation *pls)
     av_freep(&pls);
 }
 
-static void free_video_list(DASHContext *c)
+static void free_video_list(smoothContext *c)
 {
     int i;
     for (i = 0; i < c->n_videos; i++) {
@@ -377,7 +377,7 @@ static void free_video_list(DASHContext *c)
     c->n_videos = 0;
 }
 
-static void free_audio_list(DASHContext *c)
+static void free_audio_list(smoothContext *c)
 {
     int i;
     for (i = 0; i < c->n_audios; i++) {
@@ -388,7 +388,7 @@ static void free_audio_list(DASHContext *c)
     c->n_audios = 0;
 }
 
-static void free_subtitle_list(DASHContext *c)
+static void free_subtitle_list(smoothContext *c)
 {
     int i;
     for (i = 0; i < c->n_subtitles; i++) {
@@ -402,7 +402,7 @@ static void free_subtitle_list(DASHContext *c)
 static int open_url(AVFormatContext *s, AVIOContext **pb, const char *url,
                     AVDictionary **opts, AVDictionary *opts2, int *is_http)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     AVDictionary *tmp = NULL;
     const char *proto_name = NULL;
     int proto_name_len;
@@ -600,7 +600,7 @@ static int parse_manifest_segmenturlnode(AVFormatContext *s, struct representati
                                          char *rep_id_val,
                                          char *rep_bandwidth_val)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     char *initialization_val = NULL;
     char *media_val = NULL;
     char *range_val = NULL;
@@ -834,7 +834,7 @@ static int parse_manifest_representation(AVFormatContext *s, const char *url,
                                          xmlNodePtr adaptionset_supplementalproperty_node)
 {
     int32_t ret = 0;
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     struct representation *rep = NULL;
     struct fragment *seg = NULL;
     xmlNodePtr representation_segmenttemplate_node = NULL;
@@ -959,7 +959,7 @@ static int parse_manifest_representation(AVFormatContext *s, const char *url,
         if (adaptionset_supplementalproperty_node) {
             char *scheme_id_uri = xmlGetProp(adaptionset_supplementalproperty_node, "schemeIdUri");
             if (scheme_id_uri) {
-                int is_last_segment_number = !av_strcasecmp(scheme_id_uri, "http://dashif.org/guidelines/last-segment-number");
+                int is_last_segment_number = !av_strcasecmp(scheme_id_uri, "http://smoothif.org/guidelines/last-segment-number");
                 xmlFree(scheme_id_uri);
                 if (is_last_segment_number) {
                     val = xmlGetProp(adaptionset_supplementalproperty_node, "value");
@@ -1005,8 +1005,8 @@ static int parse_manifest_representation(AVFormatContext *s, const char *url,
             goto enomem;
         seg->size = -1;
     } else if (representation_segmentlist_node) {
-        // TODO: https://www.brendanlong.com/the-structure-of-an-mpeg-dash-mpd.html
-        // http://www-itec.uni-klu.ac.at/dash/ddash/mpdGenerator.php?fragmentlength=15&type=full
+        // TODO: https://www.brendanlong.com/the-structure-of-an-mpeg-smooth-mpd.html
+        // http://www-itec.uni-klu.ac.at/smooth/dsmooth/mpdGenerator.php?fragmentlength=15&type=full
         xmlNodePtr fragmenturl_node = NULL;
         segmentlists_tab[0] = representation_segmentlist_node;
         segmentlists_tab[1] = adaptionset_segmentlist_node;
@@ -1101,7 +1101,7 @@ free:
 
 static int parse_manifest_adaptationset_attr(AVFormatContext *s, xmlNodePtr adaptionset_node)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
 
     if (!adaptionset_node) {
         av_log(s, AV_LOG_WARNING, "Cannot get AdaptionSet\n");
@@ -1120,7 +1120,7 @@ static int parse_manifest_adaptationset(AVFormatContext *s, const char *url,
                                         xmlNodePtr period_segmentlist_node)
 {
     int ret = 0;
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     xmlNodePtr fragment_template_node = NULL;
     xmlNodePtr content_component_node = NULL;
     xmlNodePtr adaptionset_baseurl_node = NULL;
@@ -1199,7 +1199,7 @@ static int parse_programinformation(AVFormatContext *s, xmlNodePtr node)
 
 static int parse_manifest(AVFormatContext *s, const char *url, AVIOContext *in)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     int ret = 0;
     int close_in = 0;
     AVBPrint buf;
@@ -1373,7 +1373,7 @@ cleanup:
 
 static int64_t calc_cur_seg_no(AVFormatContext *s, struct representation *pls)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     int64_t num = 0;
     int64_t start_time_offset = 0;
 
@@ -1411,7 +1411,7 @@ static int64_t calc_cur_seg_no(AVFormatContext *s, struct representation *pls)
 
 static int64_t calc_min_seg_no(AVFormatContext *s, struct representation *pls)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     int64_t num = 0;
 
     if (c->is_live && pls->fragment_duration) {
@@ -1423,7 +1423,7 @@ static int64_t calc_min_seg_no(AVFormatContext *s, struct representation *pls)
     return num;
 }
 
-static int64_t calc_max_seg_no(struct representation *pls, DASHContext *c)
+static int64_t calc_max_seg_no(struct representation *pls, smoothContext *c)
 {
     int64_t num = 0;
 
@@ -1449,7 +1449,7 @@ static int64_t calc_max_seg_no(struct representation *pls, DASHContext *c)
     return num;
 }
 
-static void move_timelines(struct representation *rep_src, struct representation *rep_dest, DASHContext *c)
+static void move_timelines(struct representation *rep_src, struct representation *rep_dest, smoothContext *c)
 {
     if (rep_dest && rep_src ) {
         free_timelines_list(rep_dest);
@@ -1463,7 +1463,7 @@ static void move_timelines(struct representation *rep_src, struct representation
     }
 }
 
-static void move_segments(struct representation *rep_src, struct representation *rep_dest, DASHContext *c)
+static void move_segments(struct representation *rep_src, struct representation *rep_dest, smoothContext *c)
 {
     if (rep_dest && rep_src ) {
         free_fragment_list(rep_dest);
@@ -1484,7 +1484,7 @@ static void move_segments(struct representation *rep_src, struct representation 
 static int refresh_manifest(AVFormatContext *s)
 {
     int ret = 0, i;
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     // save current context
     int n_videos = c->n_videos;
     struct representation **videos = c->videos;
@@ -1586,7 +1586,7 @@ static struct fragment *get_current_fragment(struct representation *pls)
     int64_t max_seq_no = 0;
     struct fragment *seg = NULL;
     struct fragment *seg_ptr = NULL;
-    DASHContext *c = pls->parent->priv_data;
+    smoothContext *c = pls->parent->priv_data;
 
     while (( !ff_check_interrupt(c->interrupt_callback)&& pls->n_fragments > 0)) {
         if (pls->cur_seq_no < pls->n_fragments) {
@@ -1644,7 +1644,7 @@ static struct fragment *get_current_fragment(struct representation *pls)
             av_free(seg);
             return NULL;
         }
-        ff_dash_fill_tmpl_params(tmpfilename, c->max_url_size, pls->url_template, 0, pls->cur_seq_no, 0, get_segment_start_time_based_on_timeline(pls, pls->cur_seq_no));
+        ff_smooth_fill_tmpl_params(tmpfilename, c->max_url_size, pls->url_template, 0, pls->cur_seq_no, 0, get_segment_start_time_based_on_timeline(pls, pls->cur_seq_no));
         seg->url = av_strireplace(pls->url_template, pls->url_template, tmpfilename);
         if (!seg->url) {
             av_log(pls->parent, AV_LOG_WARNING, "Unable to resolve template url '%s', try to use origin template\n", pls->url_template);
@@ -1679,7 +1679,7 @@ static int read_from_url(struct representation *pls, struct fragment *seg,
     return ret;
 }
 
-static int open_input(DASHContext *c, struct representation *pls, struct fragment *seg)
+static int open_input(smoothContext *c, struct representation *pls, struct fragment *seg)
 {
     AVDictionary *opts = NULL;
     char *url = NULL;
@@ -1699,7 +1699,7 @@ static int open_input(DASHContext *c, struct representation *pls, struct fragmen
     }
 
     ff_make_absolute_url(url, c->max_url_size, c->base_url, seg->url);
-    av_log(pls->parent, AV_LOG_VERBOSE, "DASH request for url '%s', offset %"PRId64"\n",
+    av_log(pls->parent, AV_LOG_VERBOSE, "smooth request for url '%s', offset %"PRId64"\n",
            url, seg->url_offset);
     ret = open_url(pls->parent, &pls->input, url, &c->avio_opts, opts, NULL);
 
@@ -1714,7 +1714,7 @@ cleanup:
 static int update_init_section(struct representation *pls)
 {
     static const int max_init_section_size = 1024 * 1024;
-    DASHContext *c = pls->parent->priv_data;
+    smoothContext *c = pls->parent->priv_data;
     int64_t sec_size;
     int64_t urlsize;
     int ret;
@@ -1771,7 +1771,7 @@ static int read_data(void *opaque, uint8_t *buf, int buf_size)
 {
     int ret = 0;
     struct representation *v = opaque;
-    DASHContext *c = v->parent->priv_data;
+    smoothContext *c = v->parent->priv_data;
 
 restart:
     if (!v->input) {
@@ -1834,7 +1834,7 @@ static int nested_io_open(AVFormatContext *s, AVIOContext **pb, const char *url,
                           int flags, AVDictionary **opts)
 {
     av_log(s, AV_LOG_ERROR,
-           "A DASH playlist item '%s' referred to an external file '%s'. "
+           "A smooth playlist item '%s' referred to an external file '%s'. "
            "Opening this file was forbidden for security reasons\n",
            s->url, url);
     return AVERROR(EPERM);
@@ -1851,7 +1851,7 @@ static void close_demux_for_component(struct representation *pls)
 
 static int reopen_demux_for_component(AVFormatContext *s, struct representation *pls)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     const AVInputFormat *in_fmt = NULL;
     AVDictionary  *in_fmt_opts = NULL;
     uint8_t *avio_ctx_buffer  = NULL;
@@ -2021,9 +2021,9 @@ static void move_metadata(AVStream *st, const char *key, char **value)
     }
 }
 
-static int dash_read_header(AVFormatContext *s)
+static int smooth_read_header(AVFormatContext *s)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     struct representation *rep;
     AVProgram *program;
     int ret = 0;
@@ -2179,9 +2179,9 @@ static void recheck_discard_flags(AVFormatContext *s, struct representation **p,
     }
 }
 
-static int dash_read_packet(AVFormatContext *s, AVPacket *pkt)
+static int smooth_read_packet(AVFormatContext *s, AVPacket *pkt)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     int ret = 0, i;
     int64_t mints = 0;
     struct representation *cur = NULL;
@@ -2242,9 +2242,9 @@ static int dash_read_packet(AVFormatContext *s, AVPacket *pkt)
     return AVERROR_EOF;
 }
 
-static int dash_close(AVFormatContext *s)
+static int smooth_close(AVFormatContext *s)
 {
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     free_audio_list(c);
     free_video_list(c);
     free_subtitle_list(c);
@@ -2253,14 +2253,14 @@ static int dash_close(AVFormatContext *s)
     return 0;
 }
 
-static int dash_seek(AVFormatContext *s, struct representation *pls, int64_t seek_pos_msec, int flags, int dry_run)
+static int smooth_seek(AVFormatContext *s, struct representation *pls, int64_t seek_pos_msec, int flags, int dry_run)
 {
     int ret = 0;
     int i = 0;
     int j = 0;
     int64_t duration = 0;
 
-    av_log(pls->parent, AV_LOG_VERBOSE, "DASH seek pos[%"PRId64"ms] %s\n",
+    av_log(pls->parent, AV_LOG_VERBOSE, "smooth seek pos[%"PRId64"ms] %s\n",
            seek_pos_msec, dry_run ? " (dry)" : "");
 
     // single fragment mode
@@ -2278,7 +2278,7 @@ static int dash_seek(AVFormatContext *s, struct representation *pls, int64_t see
     // find the nearest fragment
     if (pls->n_timelines > 0 && pls->fragment_timescale > 0) {
         int64_t num = pls->first_seq_no;
-        av_log(pls->parent, AV_LOG_VERBOSE, "dash_seek with SegmentTimeline start n_timelines[%d] "
+        av_log(pls->parent, AV_LOG_VERBOSE, "smooth_seek with SegmentTimeline start n_timelines[%d] "
                "last_seq_no[%"PRId64"].\n",
                (int)pls->n_timelines, (int64_t)pls->last_seq_no);
         for (i = 0; i < pls->n_timelines; i++) {
@@ -2301,12 +2301,12 @@ static int dash_seek(AVFormatContext *s, struct representation *pls, int64_t see
 
 set_seq_num:
         pls->cur_seq_no = num > pls->last_seq_no ? pls->last_seq_no : num;
-        av_log(pls->parent, AV_LOG_VERBOSE, "dash_seek with SegmentTimeline end cur_seq_no[%"PRId64"].\n",
+        av_log(pls->parent, AV_LOG_VERBOSE, "smooth_seek with SegmentTimeline end cur_seq_no[%"PRId64"].\n",
                (int64_t)pls->cur_seq_no);
     } else if (pls->fragment_duration > 0) {
         pls->cur_seq_no = pls->first_seq_no + ((seek_pos_msec * pls->fragment_timescale) / pls->fragment_duration) / 1000;
     } else {
-        av_log(pls->parent, AV_LOG_ERROR, "dash_seek missing timeline or fragment_duration\n");
+        av_log(pls->parent, AV_LOG_ERROR, "smooth_seek missing timeline or fragment_duration\n");
         pls->cur_seq_no = pls->first_seq_no;
     }
     pls->cur_timestamp = 0;
@@ -2317,10 +2317,10 @@ set_seq_num:
     return ret;
 }
 
-static int dash_read_seek(AVFormatContext *s, int stream_index, int64_t timestamp, int flags)
+static int smooth_read_seek(AVFormatContext *s, int stream_index, int64_t timestamp, int flags)
 {
     int ret = 0, i;
-    DASHContext *c = s->priv_data;
+    smoothContext *c = s->priv_data;
     int64_t seek_pos_msec = av_rescale_rnd(timestamp, 1000,
                                            s->streams[stream_index]->time_base.den,
                                            flags & AVSEEK_FLAG_BACKWARD ?
@@ -2331,67 +2331,64 @@ static int dash_read_seek(AVFormatContext *s, int stream_index, int64_t timestam
     /* Seek in discarded streams with dry_run=1 to avoid reopening them */
     for (i = 0; i < c->n_videos; i++) {
         if (!ret)
-            ret = dash_seek(s, c->videos[i], seek_pos_msec, flags, !c->videos[i]->ctx);
+            ret = smooth_seek(s, c->videos[i], seek_pos_msec, flags, !c->videos[i]->ctx);
     }
     for (i = 0; i < c->n_audios; i++) {
         if (!ret)
-            ret = dash_seek(s, c->audios[i], seek_pos_msec, flags, !c->audios[i]->ctx);
+            ret = smooth_seek(s, c->audios[i], seek_pos_msec, flags, !c->audios[i]->ctx);
     }
     for (i = 0; i < c->n_subtitles; i++) {
         if (!ret)
-            ret = dash_seek(s, c->subtitles[i], seek_pos_msec, flags, !c->subtitles[i]->ctx);
+            ret = smooth_seek(s, c->subtitles[i], seek_pos_msec, flags, !c->subtitles[i]->ctx);
     }
 
     return ret;
 }
 
-static int dash_probe(const AVProbeData *p)
+static int smooth_probe(const AVProbeData *p)
 {
-    if (!av_stristr(p->buf, "<MPD"))
+    if (!av_stristr(p->buf, "<SmoothStreamingMedia"))
         return 0;
 
-    if (av_stristr(p->buf, "dash:profile:isoff-on-demand:2011") ||
-        av_stristr(p->buf, "dash:profile:isoff-live:2011") ||
-        av_stristr(p->buf, "dash:profile:isoff-live:2012") ||
-        av_stristr(p->buf, "dash:profile:isoff-main:2011") ||
-        av_stristr(p->buf, "3GPP:PSS:profile:DASH1")) {
+    if (av_stristr(p->buf, "<?xml version=\"1.0\"")) {
         return AVPROBE_SCORE_MAX;
     }
-    if (av_stristr(p->buf, "dash:profile")) {
+    if (av_stristr(p->buf, "DVRWindowLength")) {
         return AVPROBE_SCORE_MAX;
     }
-
+    /* TODO: check for SmoothStreamingMedia */
     return 0;
 }
 
-#define OFFSET(x) offsetof(DASHContext, x)
+
+#define OFFSET(x) offsetof(smoothContext, x)
 #define FLAGS AV_OPT_FLAG_DECODING_PARAM
-static const AVOption dash_options[] = {
-    {"allowed_extensions", "List of file extensions that dash is allowed to access",
+static const AVOption smooth_options[] = {
+    {"allowed_extensions", "List of file extensions that smooth is allowed to access",
         OFFSET(allowed_extensions), AV_OPT_TYPE_STRING,
-        {.str = "aac,m4a,m4s,m4v,mov,mp4,webm,ts"},
+        {.str = "aac,m4a,m4s,m4v,mov,mp4,webm,ts,manifest"},
         INT_MIN, INT_MAX, FLAGS},
     { "defanskey", "Media decryption key (hex)", OFFSET(cenc_decryption_key), AV_OPT_TYPE_STRING, {.str = NULL}, INT_MIN, INT_MAX, .flags = FLAGS },
     {NULL}
 };
 
-static const AVClass dash_class = {
-    .class_name = "dash",
+static const AVClass smooth_class = {
+    .class_name = "smooth",
     .item_name  = av_default_item_name,
-    .option     = dash_options,
+    .option     = smooth_options,
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-const AVInputFormat ff_dash_demuxer = {
-    .name           = "dash",
-    .long_name      = NULL_IF_CONFIG_SMALL("Dynamic Adaptive Streaming over HTTP"),
-    .priv_class     = &dash_class,
-    .priv_data_size = sizeof(DASHContext),
+const AVInputFormat ff_smooth_demuxer = {
+    .name           = "smooth",
+    .long_name      = NULL_IF_CONFIG_SMALL("Smooth Streaming over HTTP"),
+    .priv_class     = &smooth_class,
+    .priv_data_size = sizeof(smoothContext),
     .flags_internal = FF_FMT_INIT_CLEANUP,
-    .read_probe     = dash_probe,
-    .read_header    = dash_read_header,
-    .read_packet    = dash_read_packet,
-    .read_close     = dash_close,
-    .read_seek      = dash_read_seek,
+    .read_probe     = smooth_probe,
+    .read_header    = smooth_read_header,
+    .read_packet    = smooth_read_packet,
+    .read_close     = smooth_close,
+    .read_seek      = smooth_read_seek,
     .flags          = AVFMT_NO_BYTE_SEEK,
 };
